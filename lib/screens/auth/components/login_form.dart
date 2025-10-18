@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 import '../../../../constants.dart';
 
-class LogInForm extends StatelessWidget {
+class LogInForm extends StatefulWidget {
   const LogInForm({
     super.key,
     required this.formKey,
@@ -12,16 +11,23 @@ class LogInForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
 
   @override
+  State<LogInForm> createState() => LogInFormState();
+}
+
+class LogInFormState extends State<LogInForm> {
+  String _email = '';
+  String _password = '';
+
+  @override
   Widget build(BuildContext context) {
     return Form(
-      key: formKey,
+      key: widget.formKey,
       child: Column(
         children: [
+          // Email field
           TextFormField(
-            onSaved: (emal) {
-              // Email
-            },
-            validator: emaildValidator.call,
+            onSaved: (email) => _email = email!.trim(),
+            // validator: emaildValidator.call,
             textInputAction: TextInputAction.next,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
@@ -33,18 +39,19 @@ class LogInForm extends StatelessWidget {
                   height: 24,
                   width: 24,
                   colorFilter: ColorFilter.mode(
-                      Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.3),
-                      BlendMode.srcIn),
+                    Theme.of(context).textTheme.bodyLarge!.color!.withAlpha(77),
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: defaultPadding),
+
+          // Password field
           TextFormField(
-            onSaved: (pass) {
-              // Password
-            },
-            validator: passwordValidator.call,
+            onSaved: (pass) => _password = pass!.trim(),
+            // validator: passwordValidator.call,
             obscureText: true,
             decoration: InputDecoration(
               hintText: "Password",
@@ -55,8 +62,9 @@ class LogInForm extends StatelessWidget {
                   height: 24,
                   width: 24,
                   colorFilter: ColorFilter.mode(
-                      Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.3),
-                      BlendMode.srcIn),
+                    Theme.of(context).textTheme.bodyLarge!.color!.withAlpha(77),
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),
@@ -64,5 +72,16 @@ class LogInForm extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Lấy email/password để gửi lên AuthService
+  /// Trả về null nếu validate không pass
+  Map<String, String>? getCredentials() {
+    final form = widget.formKey.currentState;
+    if (form != null && form.validate()) {
+      form.save();
+      return {'username': _email, 'password': _password};
+    }
+    return null;
   }
 }

@@ -24,58 +24,64 @@ class LogInFormState extends State<LogInForm> {
       key: widget.formKey,
       child: Column(
         children: [
-          // Email field
-          TextFormField(
-            onSaved: (email) => _email = email!.trim(),
-            // validator: emaildValidator.call,
-            textInputAction: TextInputAction.next,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              hintText: "Email address",
-              prefixIcon: Padding(
-                padding: const EdgeInsets.symmetric(vertical: defaultPadding * 0.75),
-                child: SvgPicture.asset(
-                  "assets/icons/Message.svg",
-                  height: 24,
-                  width: 24,
-                  colorFilter: ColorFilter.mode(
-                    Theme.of(context).textTheme.bodyLarge!.color!.withAlpha(77),
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildEmailField(context),
           const SizedBox(height: defaultPadding),
-
-          // Password field
-          TextFormField(
-            onSaved: (pass) => _password = pass!.trim(),
-            // validator: passwordValidator.call,
-            obscureText: true,
-            decoration: InputDecoration(
-              hintText: "Password",
-              prefixIcon: Padding(
-                padding: const EdgeInsets.symmetric(vertical: defaultPadding * 0.75),
-                child: SvgPicture.asset(
-                  "assets/icons/Lock.svg",
-                  height: 24,
-                  width: 24,
-                  colorFilter: ColorFilter.mode(
-                    Theme.of(context).textTheme.bodyLarge!.color!.withAlpha(77),
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildPasswordField(context),
         ],
       ),
     );
   }
 
-  /// Lấy email/password để gửi lên AuthService
-  /// Trả về null nếu validate không pass
+  // Trường nhập email
+  Widget _buildEmailField(BuildContext context) {
+    return TextFormField(
+      onSaved: (email) => _email = email!.trim(),
+      // validator: emaildValidator.call,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.emailAddress,
+      decoration: InputDecoration(
+        hintText: "Email address",
+        prefixIcon: _buildPrefixIcon(
+          context,
+          "assets/icons/Message.svg",
+        ),
+      ),
+    );
+  }
+
+  // Trường nhập mật khẩu
+  Widget _buildPasswordField(BuildContext context) {
+    return TextFormField(
+      onSaved: (pass) => _password = pass!.trim(),
+      // validator: passwordValidator.call,
+      obscureText: true,
+      decoration: InputDecoration(
+        hintText: "Password",
+        prefixIcon: _buildPrefixIcon(
+          context,
+          "assets/icons/Lock.svg",
+        ),
+      ),
+    );
+  }
+
+  // Hàm build icon prefix cho TextField (tái sử dụng)
+  Widget _buildPrefixIcon(BuildContext context, String assetPath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: defaultPadding * 0.75),
+      child: SvgPicture.asset(
+        assetPath,
+        height: 24,
+        width: 24,
+        colorFilter: ColorFilter.mode(
+          Theme.of(context).textTheme.bodyLarge!.color!.withAlpha(77),
+          BlendMode.srcIn,
+        ),
+      ),
+    );
+  }
+
+  /// 📤 Lấy email & password để gửi AuthService
   Map<String, String>? getCredentials() {
     final form = widget.formKey.currentState;
     if (form != null && form.validate()) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shop/constants/validators.dart';
 import '../../../../constants.dart';
 
 class LogInForm extends StatefulWidget {
@@ -36,7 +37,7 @@ class LogInFormState extends State<LogInForm> {
   Widget _buildEmailField(BuildContext context) {
     return TextFormField(
       onSaved: (email) => _email = email!.trim(),
-      // validator: emaildValidator.call,
+      validator: emailValidator.call,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(
@@ -53,7 +54,7 @@ class LogInFormState extends State<LogInForm> {
   Widget _buildPasswordField(BuildContext context) {
     return TextFormField(
       onSaved: (pass) => _password = pass!.trim(),
-      // validator: passwordValidator.call,
+      validator: passwordValidator.call,
       obscureText: true,
       decoration: InputDecoration(
         hintText: "Password",
@@ -65,7 +66,6 @@ class LogInFormState extends State<LogInForm> {
     );
   }
 
-  // Hàm build icon prefix cho TextField (tái sử dụng)
   Widget _buildPrefixIcon(BuildContext context, String assetPath) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: defaultPadding * 0.75),
@@ -81,7 +81,6 @@ class LogInFormState extends State<LogInForm> {
     );
   }
 
-  /// 📤 Lấy email & password để gửi AuthService
   Map<String, String>? getCredentials() {
     final form = widget.formKey.currentState;
     if (form != null && form.validate()) {

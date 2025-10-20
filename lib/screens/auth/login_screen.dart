@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/routes/route_constants.dart';
+import 'package:shop/screens/auth/components/verify_code_form.dart';
 import 'package:shop/services/auth/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'components/login_form.dart';
@@ -95,11 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
   // Khoảng cách động
   Widget _buildSpacing(Size size) {
     return SizedBox(
-      height: (size.height > 700 ? size.height * 0.1 : defaultPadding) * 0.5,
+      height: (size.height > 700 ? size.height * 0.1 : defaultPadding) * 0.4,
     );
   }
 
-  // 🔘 Nút đăng nhập
+  // Nút đăng nhập
   Widget _buildLoginButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // 🧑‍💻 Chuyển đến đăng ký
+  //  Chuyển đến đăng ký
   Widget _buildSignUpRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

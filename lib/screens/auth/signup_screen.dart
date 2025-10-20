@@ -114,7 +114,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildContinueButton() {
     return ElevatedButton(
       onPressed: () {
-        Navigator.pushNamed(context, entryPointScreenRoute);
+        Navigator.pushNamed(context, verifyCodeFormRoute);
       },
       child: const Text("Continue"),
     );

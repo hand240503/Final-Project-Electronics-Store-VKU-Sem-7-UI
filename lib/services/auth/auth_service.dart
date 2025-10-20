@@ -8,6 +8,7 @@ class AuthService {
 
   AuthService({required this.storage});
 
+  /// =================== LOGIN / LOGOUT ===================
   Future<bool> login(String username, String password) async {
     final url = Uri.parse(ApiEndpoints.baseUrl + ApiEndpoints.login);
     final response = await http.post(
@@ -50,4 +51,41 @@ class AuthService {
   }
 
   Future<String?> getAccessToken() async => await storage.read(key: 'access');
+
+  /// =================== OTP ===================
+
+  /// Gửi OTP để xác thực
+  Future<bool> verifyRegistrationOtp(String otp) async {
+    final url = Uri.parse(ApiEndpoints.baseUrl + ApiEndpoints.verifyOtp);
+
+    // Nếu backend yêu cầu token tạm, dùng storage hoặc bỏ qua nếu chưa có
+    final accessToken = await storage.read(key: 'access');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({'otp': otp}),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  /// Gửi yêu cầu resend OTP trong quá trình đăng ký
+  Future<bool> resendRegistrationOtp() async {
+    final url = Uri.parse(ApiEndpoints.baseUrl + ApiEndpoints.resendOtp);
+    final accessToken = await storage.read(key: 'access');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    return response.statusCode == 200;
+  }
 }

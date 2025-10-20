@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shop/constants/validators.dart';
 
 import '../../../../constants.dart';
 
@@ -41,7 +42,7 @@ class _SignUpFormState extends State<SignUpForm> {
   Widget _buildEmailField() {
     return TextFormField(
       onSaved: (email) {},
-      validator: emaildValidator.call,
+      validator: emailOrPhoneValidator.call,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.emailAddress,
       decoration: InputDecoration(

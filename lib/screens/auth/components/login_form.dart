@@ -83,7 +83,10 @@ class LogInFormState extends State<LogInForm> {
 
   Map<String, String>? getCredentials() {
     final form = widget.formKey.currentState;
-    if (form != null && form.validate()) {
+    if (form != null) {
+      if (!form.validate()) {
+        return null;
+      }
       form.save();
       return {'username': _email, 'password': _password};
     }

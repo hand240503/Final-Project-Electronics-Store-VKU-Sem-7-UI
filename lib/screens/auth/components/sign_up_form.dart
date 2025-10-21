@@ -15,13 +15,16 @@ class SignUpForm extends StatefulWidget {
   final TextEditingController passwordController;
 
   @override
-  State<SignUpForm> createState() => _SignUpFormState();
+  State<SignUpForm> createState() => SignUpFormState();
 }
 
-class _SignUpFormState extends State<SignUpForm> {
+class SignUpFormState extends State<SignUpForm> {
   final TextEditingController _rePasswordController = TextEditingController();
   bool _showPassword = false;
   bool _showRePassword = false;
+
+  String _email = '';
+  String _password = '';
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,9 @@ class _SignUpFormState extends State<SignUpForm> {
 
   Widget _buildEmailField() {
     return TextFormField(
-      onSaved: (email) {},
+      onSaved: (email) {
+        _email = email!.trim();
+      },
       validator: emailOrPhoneValidator.call,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.emailAddress,
@@ -70,8 +75,8 @@ class _SignUpFormState extends State<SignUpForm> {
       controller: widget.passwordController,
       obscureText: !_showPassword,
       validator: passwordValidator.call,
-      onChanged: (value) {
-        setState(() {});
+      onChanged: (password) {
+        _password = password.trim();
       },
       decoration: InputDecoration(
         hintText: "Password",
@@ -107,9 +112,6 @@ class _SignUpFormState extends State<SignUpForm> {
     return TextFormField(
       controller: _rePasswordController,
       obscureText: !_showRePassword,
-      onChanged: (value) {
-        setState(() {});
-      },
       validator: (value) {
         if (value == null || value.isEmpty) return "Please re-enter your password";
         if (value != widget.passwordController.text) return "Passwords do not match";
@@ -141,5 +143,20 @@ class _SignUpFormState extends State<SignUpForm> {
               ),
       ),
     );
+  }
+
+  Map<String, String>? getCredentials() {
+    final form = widget.formKey.currentState;
+    if (form != null) {
+      if (!form.validate()) {
+        return null;
+      }
+      form.save();
+      return {
+        'email': _email,
+        'password': _password,
+      };
+    }
+    return null;
   }
 }

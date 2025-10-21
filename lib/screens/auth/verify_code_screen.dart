@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shop/constants.dart';
+import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/auth/components/verify_code_form.dart';
 import 'package:shop/services/auth/auth_service.dart';
 
@@ -20,10 +21,11 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   bool _canResend = false;
   int _secondsRemaining = 120; // 2 phút
   Timer? _timer;
-
+  String _email = '';
   @override
   void initState() {
     super.initState();
+    _loadEmail();
     _startResendTimer();
   }
 
@@ -50,6 +52,15 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     });
   }
 
+  Future<void> _loadEmail() async {
+    final email = await _authService.storage.read(key: 'email');
+    if (mounted) {
+      setState(() {
+        _email = email ?? ''; // gán vào biến _email, nếu null thì để chuỗi rỗng
+      });
+    }
+  }
+
   Future<void> _verifyOtp() async {
     if (_verifyFormKey.currentState == null) return;
 
@@ -63,7 +74,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
     setState(() => _loading = true);
     try {
-      final success = await _authService.verifyRegistrationOtp(otp);
+      final email = await _authService.storage.read(key: 'email');
+      if (email == null) throw 'Email not found. Please register again.';
+
+      final success = await _authService.verifyRegistrationOtp(email, otp);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -72,6 +86,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           ),
         ),
       );
+
+      if (success && context.mounted) {
+        Navigator.pushReplacementNamed(context, entryPointScreenRoute);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -152,9 +170,19 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: defaultPadding / 4),
-        const Text(
-          "We have sent the code verification to your email.",
-        ),
+        RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.bodyMedium,
+            children: [
+              const TextSpan(text: "We have sent the code verification to "),
+              TextSpan(
+                text: _email.isNotEmpty ? _email : "your email",
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
+              const TextSpan(text: "."),
+            ],
+          ),
+        )
       ],
     );
   }

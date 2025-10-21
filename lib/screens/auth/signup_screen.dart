@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/auth/components/sign_up_form.dart';
+import 'package:shop/services/auth/auth_service.dart';
 
 import '../../constants.dart';
 
@@ -15,8 +17,11 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
+  final GlobalKey<SignUpFormState> _signUpFormKey = GlobalKey<SignUpFormState>();
   bool _agreeTerms = false;
 
+  final AuthService _authService = AuthService(storage: FlutterSecureStorage());
+  final FlutterSecureStorage storage = FlutterSecureStorage();  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,6 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _buildSignUpForm() {
     return SignUpForm(
+      key: _signUpFormKey,
       formKey: _formKey,
       passwordController: _passwordController,
     );
@@ -113,8 +119,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _buildContinueButton() {
     return ElevatedButton(
-      onPressed: () {
-        Navigator.pushNamed(context, verifyCodeFormRoute);
+      onPressed: () async {
+        final credentials = _signUpFormKey.currentState?.getCredentials();
+
+        if (credentials == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please fill in all fields correctly')),
+          );
+          return;
+        }
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+
+        // Gọi API register
+        final success = await _authService.register(
+          credentials['email']!,
+          credentials['password']!,
+        );
+
+        // Ẩn loading
+        Navigator.pop(context);
+        await storage.write(key: 'email', value: credentials['email']!);
+
+        if (success) {
+          // Chuyển về màn hình login hoặc màn hình chính
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            verifyCodeFormRoute,
+            (route) => false,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration failed. Email may already exist.')),
+          );
+        }
       },
       child: const Text("Continue"),
     );

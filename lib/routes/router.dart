@@ -5,6 +5,7 @@ import 'package:shop/screens/auth/login_screen.dart';
 import 'package:shop/screens/auth/signup_screen.dart';
 import 'package:shop/screens/auth/verify_code_screen.dart';
 import 'package:shop/screens/onbording/onbording_screnn.dart';
+import 'package:shop/screens/product/product_details_screen.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
@@ -27,6 +28,13 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case verifyCodeFormRoute:
       return MaterialPageRoute(
         builder: (context) => const VerifyCodeScreen(),
+      );
+    case productDetailsScreenRoute:
+      return MaterialPageRoute(
+        builder: (context) {
+          bool isProductAvailable = settings.arguments as bool? ?? true;
+          return ProductDetailsScreen(isProductAvailable: isProductAvailable);
+        },
       );
     default:
       return MaterialPageRoute(

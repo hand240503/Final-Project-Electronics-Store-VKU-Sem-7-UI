@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shop/components/Banner/S/banner_s_style_1.dart';
 import 'package:shop/components/Banner/S/banner_s_style_5.dart';
 import 'package:shop/constants.dart';
-import 'package:shop/routes/screen_export.dart';
+import 'package:shop/screens/home/components/best_sellers.dart';
+import 'package:shop/screens/home/components/flash_sale.dart';
+import 'package:shop/screens/home/components/most_popular.dart';
+import 'package:shop/screens/home/components/offer_carousel_and_categories.dart';
+import 'package:shop/screens/home/components/popular_products.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,12 +17,12 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // const SliverToBoxAdapter(child: OffersCarouselAndCategories()),
-            // const SliverToBoxAdapter(child: PopularProducts()),
-            // const SliverPadding(
-            //   padding: EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
-            //   sliver: SliverToBoxAdapter(child: FlashSale()),
-            // ),
+            const SliverToBoxAdapter(child: OffersCarouselAndCategories()),
+            const SliverToBoxAdapter(child: PopularProducts()),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
+              sliver: SliverToBoxAdapter(child: FlashSale()),
+            ),
             SliverToBoxAdapter(
               child: Column(
                 children: [
@@ -37,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // const SliverToBoxAdapter(child: BestSellers()),
+            const SliverToBoxAdapter(child: BestSellers()),
             // const SliverToBoxAdapter(child: MostPopular()),
             SliverToBoxAdapter(
               child: Column(
@@ -59,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // const SliverToBoxAdapter(child: BestSellers()),
+            const SliverToBoxAdapter(child: BestSellers()),
           ],
         ),
       ),

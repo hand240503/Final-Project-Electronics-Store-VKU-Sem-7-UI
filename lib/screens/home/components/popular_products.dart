@@ -5,8 +5,14 @@ import 'package:shop/routes/route_constants.dart';
 
 import '../../../../constants.dart';
 
-class PopularProducts extends StatelessWidget {
-  const PopularProducts({super.key});
+class ProductListSection extends StatelessWidget {
+  final List<ProductModel> products; // thêm đây
+  final String title;
+  const ProductListSection({
+    super.key,
+    required this.products,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,42 +24,50 @@ class PopularProducts extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(defaultPadding),
             child: Text(
-              "Popular products",
+              title,
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),
-          // While loading use 👇
-          // const ProductsSkelton(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
-            child: GridView.builder(
-              physics:
-                  const NeverScrollableScrollPhysics(), // không cuộn riêng, cuộn theo toàn trang
-              shrinkWrap: true, // cho phép GridView nằm trong Column
-              itemCount: demoPopularProducts.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 sản phẩm mỗi hàng
-                crossAxisSpacing: defaultPadding, // khoảng cách ngang
-                mainAxisSpacing: defaultPadding, // khoảng cách dọc
-                childAspectRatio: 0.75, // tỉ lệ khung (tùy theo ProductCard)
+          if (products.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(defaultPadding * 2),
+                child: Text("Không có sản phẩm nào."),
               ),
-              itemBuilder: (context, index) => ProductCard(
-                image: demoPopularProducts[index].image,
-                brandName: demoPopularProducts[index].brandName,
-                title: demoPopularProducts[index].title,
-                price: demoPopularProducts[index].price,
-                priceAfetDiscount: demoPopularProducts[index].priceAfetDiscount,
-                dicountpercent: demoPopularProducts[index].dicountpercent,
-                press: () {
-                  Navigator.pushNamed(
-                    context,
-                    productDetailsScreenRoute,
-                    arguments: index.isEven,
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: products.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // 2 sản phẩm mỗi hàng
+                  crossAxisSpacing: defaultPadding,
+                  mainAxisSpacing: defaultPadding,
+                  childAspectRatio: 0.75, // tùy theo ProductCard
+                ),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return ProductCard(
+                    image: product.image,
+                    brandName: product.brandName,
+                    title: product.title,
+                    price: product.price,
+                    priceAfterDiscount: product.priceAfterDiscount,
+                    discountPercent: product.discountPercent,
+                    press: () {
+                      Navigator.pushNamed(
+                        context,
+                        productDetailsScreenRoute,
+                        arguments: product,
+                      );
+                    },
                   );
                 },
               ),
             ),
-          ),
         ],
       ),
     );

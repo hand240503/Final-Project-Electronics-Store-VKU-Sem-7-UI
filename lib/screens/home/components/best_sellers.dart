@@ -42,8 +42,8 @@ class BestSellers extends StatelessWidget {
                 brandName: demoBestSellersProducts[index].brandName,
                 title: demoBestSellersProducts[index].title,
                 price: demoBestSellersProducts[index].price,
-                priceAfetDiscount: demoBestSellersProducts[index].priceAfetDiscount,
-                dicountpercent: demoBestSellersProducts[index].dicountpercent,
+                priceAfterDiscount: demoBestSellersProducts[index].priceAfterDiscount,
+                discountPercent: demoBestSellersProducts[index].discountPercent,
                 press: () {
                   Navigator.pushNamed(
                     context,

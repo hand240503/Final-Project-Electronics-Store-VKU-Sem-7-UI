@@ -10,14 +10,14 @@ class ProductCard extends StatelessWidget {
     required this.brandName,
     required this.title,
     required this.price,
-    this.priceAfetDiscount,
-    this.dicountpercent,
+    this.priceAfterDiscount,
+    this.discountPercent,
     required this.press,
   });
   final String image, brandName, title;
   final double price;
-  final double? priceAfetDiscount;
-  final int? dicountpercent;
+  final double? priceAfterDiscount;
+  final int? discountPercent;
   final VoidCallback press;
 
   @override
@@ -35,7 +35,7 @@ class ProductCard extends StatelessWidget {
             child: Stack(
               children: [
                 NetworkImageWithLoader(image, radius: defaultBorderRadious),
-                if (dicountpercent != null)
+                if (discountPercent != null)
                   Positioned(
                     right: defaultPadding / 2,
                     top: defaultPadding / 2,
@@ -47,7 +47,7 @@ class ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.all(Radius.circular(defaultBorderRadious)),
                       ),
                       child: Text(
-                        "$dicountpercent% off",
+                        "$discountPercent% off",
                         style: const TextStyle(
                             color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500),
                       ),
@@ -75,11 +75,11 @@ class ProductCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall!.copyWith(fontSize: 12),
                   ),
                   const Spacer(),
-                  priceAfetDiscount != null
+                  priceAfterDiscount != null
                       ? Row(
                           children: [
                             Text(
-                              "\$$priceAfetDiscount",
+                              "\$$priceAfterDiscount",
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,

@@ -52,8 +52,8 @@ class FlashSale extends StatelessWidget {
                 brandName: demoFlashSaleProducts[index].brandName,
                 title: demoFlashSaleProducts[index].title,
                 price: demoFlashSaleProducts[index].price,
-                priceAfetDiscount: demoFlashSaleProducts[index].priceAfetDiscount,
-                dicountpercent: demoFlashSaleProducts[index].dicountpercent,
+                priceAfterDiscount: demoFlashSaleProducts[index].priceAfterDiscount,
+                discountPercent: demoFlashSaleProducts[index].discountPercent,
                 press: () {
                   Navigator.pushNamed(
                     context,

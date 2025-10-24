@@ -18,7 +18,9 @@ class LogInForm extends StatefulWidget {
 class LogInFormState extends State<LogInForm> {
   String _email = '';
   String _password = '';
-
+  final TextEditingController _emailController =
+      TextEditingController(text: "hand.24052003@gmail.com");
+  final TextEditingController _passwordController = TextEditingController(text: "test1234*");
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -36,6 +38,7 @@ class LogInFormState extends State<LogInForm> {
   // Trường nhập email
   Widget _buildEmailField(BuildContext context) {
     return TextFormField(
+      controller: _emailController,
       onSaved: (email) => _email = email!.trim(),
       validator: emailValidator.call,
       textInputAction: TextInputAction.next,
@@ -53,6 +56,7 @@ class LogInFormState extends State<LogInForm> {
   // Trường nhập mật khẩu
   Widget _buildPasswordField(BuildContext context) {
     return TextFormField(
+      controller: _passwordController,
       onSaved: (pass) => _password = pass!.trim(),
       validator: passwordValidator.call,
       obscureText: true,

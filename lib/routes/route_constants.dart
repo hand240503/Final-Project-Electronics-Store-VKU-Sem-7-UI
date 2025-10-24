@@ -6,3 +6,4 @@ const String entryPointScreenRoute = "entry_point";
 const String verifyCodeFormRoute = "verify_code";
 const String onSaleScreenRoute = "on_sale";
 const String productDetailsScreenRoute = "product_details";
+const String walletScreenRoute = "wallet";

@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme(context),
       themeMode: ThemeMode.light,
       onGenerateRoute: router.generateRoute,
-      initialRoute: onbordingScreenRoute,
+      initialRoute: homeScreenRoute,
     );
   }
 }

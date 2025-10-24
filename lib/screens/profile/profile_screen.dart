@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:shop/components/list_tile/divider_list_tile.dart';
 import 'package:shop/components/network_image_with_loader.dart';
 import 'package:shop/constants.dart';
+import 'package:shop/routes/route_constants.dart';
 
 import 'components/profile_card.dart';
 import 'components/profile_menu_item_list_tile.dart';
@@ -80,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
             text: "Wallet",
             svgSrc: "assets/icons/Wallet.svg",
             press: () {
-              // Navigator.pushNamed(context, walletScreenRoute);
+              Navigator.pushNamed(context, walletScreenRoute);
             },
           ),
           const SizedBox(height: defaultPadding),

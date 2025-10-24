@@ -1,35 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shop/models/category_model.dart';
 import 'package:shop/routes/route_constants.dart';
-
-
 import '../../../../constants.dart';
 
-// For preview
-class CategoryModel {
-  final String name;
-  final String? svgSrc, route;
-
-  CategoryModel({
-    required this.name,
-    this.svgSrc,
-    this.route,
-  });
-}
-
 List<CategoryModel> demoCategories = [
-  CategoryModel(name: "All Categories"),
-  CategoryModel(name: "On Sale", svgSrc: "assets/icons/Sale.svg", route: logInScreenRoute),
-  CategoryModel(name: "Man's", svgSrc: "assets/icons/Man.svg"),
-  CategoryModel(name: "Woman’s", svgSrc: "assets/icons/Woman.svg"),
-  CategoryModel(name: "Kids", svgSrc: "assets/icons/Child.svg", route: logInScreenRoute),
+  CategoryModel(title: "All Categories"),
+  CategoryModel(title: "On Sale", svgSrc: "assets/icons/Sale.svg", route: logInScreenRoute),
+  CategoryModel(title: "Man's", svgSrc: "assets/icons/Man.svg"),
+  CategoryModel(title: "Woman’s", svgSrc: "assets/icons/Woman.svg"),
+  CategoryModel(title: "Kids", svgSrc: "assets/icons/Child.svg", route: logInScreenRoute),
 ];
-// End For Preview
 
-class Categories extends StatelessWidget {
+class Categories extends StatefulWidget {
+  final List<Map<String, dynamic>> categoriesData;
+  final void Function(Map<String, dynamic>)? onCategorySelected;
+
   const Categories({
     super.key,
+    required this.categoriesData,
+    this.onCategorySelected,
   });
+
+  @override
+  State<Categories> createState() => _CategoriesState();
+}
+
+class _CategoriesState extends State<Categories> {
+  int? selectedCategoryId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.categoriesData.isNotEmpty) {
+      selectedCategoryId = widget.categoriesData.first['id'];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,24 +43,30 @@ class Categories extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          ...List.generate(
-            demoCategories.length,
-            (index) => Padding(
+          ...List.generate(widget.categoriesData.length, (index) {
+            final category = widget.categoriesData[index];
+            final isSelected = selectedCategoryId == category['id'];
+
+            return Padding(
               padding: EdgeInsets.only(
-                  left: index == 0 ? defaultPadding : defaultPadding / 2,
-                  right: index == demoCategories.length - 1 ? defaultPadding : 0),
+                left: index == 0 ? defaultPadding : defaultPadding / 2,
+                right: index == widget.categoriesData.length - 1 ? defaultPadding : 0,
+              ),
               child: CategoryBtn(
-                category: demoCategories[index].name,
-                svgSrc: demoCategories[index].svgSrc,
-                isActive: index == 0,
+                category: category['title'] ?? category['name'] ?? '',
+                svgSrc: category['svgSrc'],
+                isActive: isSelected,
                 press: () {
-                  if (demoCategories[index].route != null) {
-                    Navigator.pushNamed(context, demoCategories[index].route!);
+                  setState(() {
+                    selectedCategoryId = category['id'];
+                  });
+                  if (widget.onCategorySelected != null) {
+                    widget.onCategorySelected!(category);
                   }
                 },
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -85,7 +97,9 @@ class CategoryBtn extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
         decoration: BoxDecoration(
           color: isActive ? primaryColor : Colors.transparent,
-          border: Border.all(color: isActive ? Colors.transparent : Theme.of(context).dividerColor),
+          border: Border.all(
+            color: isActive ? primaryColor : Theme.of(context).dividerColor,
+          ),
           borderRadius: const BorderRadius.all(Radius.circular(30)),
         ),
         child: Row(

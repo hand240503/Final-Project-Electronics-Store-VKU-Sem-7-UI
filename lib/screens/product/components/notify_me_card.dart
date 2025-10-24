@@ -18,8 +18,8 @@ class NotifyMeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: defaultPadding, vertical: defaultPadding / 2),
+        padding:
+            const EdgeInsets.symmetric(horizontal: defaultPadding, vertical: defaultPadding / 2),
         child: Container(
           decoration: BoxDecoration(
             color: isNotify ? primaryColor : Colors.transparent,
@@ -29,11 +29,7 @@ class NotifyMeCard extends StatelessWidget {
             border: Border.all(
               color: isNotify
                   ? Colors.transparent
-                  : Theme.of(context)
-                      .textTheme
-                      .bodyLarge!
-                      .color!
-                      .withOpacity(0.1),
+                  : Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.1),
             ),
           ),
           child: Padding(
@@ -61,16 +57,15 @@ class NotifyMeCard extends StatelessWidget {
                   child: Text(
                     "Notify when product back to stock.",
                     style: TextStyle(
-                        color: isNotify
-                            ? Colors.white
-                            : Theme.of(context).textTheme.bodyLarge!.color,
+                        color:
+                            isNotify ? Colors.white : Theme.of(context).textTheme.bodyLarge!.color,
                         fontWeight: FontWeight.w500),
                   ),
                 ),
                 CupertinoSwitch(
                   onChanged: onChanged,
                   value: isNotify,
-                  activeColor: primaryMaterialColor.shade900,
+                  activeTrackColor: primaryMaterialColor.shade900,
                 )
               ],
             ),

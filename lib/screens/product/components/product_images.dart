@@ -22,8 +22,7 @@ class _ProductImagesState extends State<ProductImages> {
 
   @override
   void initState() {
-    _controller =
-        PageController(viewportFraction: 0.9, initialPage: _currentPage);
+    _controller = PageController(viewportFraction: 0.9, initialPage: _currentPage);
     super.initState();
   }
 
@@ -76,16 +75,14 @@ class _ProductImagesState extends State<ProductImages> {
                       widget.images.length,
                       (index) => Padding(
                         padding: EdgeInsets.only(
-                            right: index == (widget.images.length - 1)
-                                ? 0
-                                : defaultPadding / 4),
+                            right: index == (widget.images.length - 1) ? 0 : defaultPadding / 4),
                         child: CircleAvatar(
                           radius: 3,
                           backgroundColor: Theme.of(context)
                               .textTheme
                               .bodyLarge!
                               .color!
-                              .withOpacity(index == _currentPage ? 1 : 0.2),
+                              .withValues(alpha: index == _currentPage ? 1 : 0.2),
                         ),
                       ),
                     ),

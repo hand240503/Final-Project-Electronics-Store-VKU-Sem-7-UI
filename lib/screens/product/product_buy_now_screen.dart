@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shop/components/cart_button.dart';
 import 'package:shop/components/network_image_with_loader.dart';
+import 'package:shop/models/product_model.dart';
 import 'package:shop/screens/product/added_to_cart_message_screen.dart';
 import 'package:shop/screens/product/components/product_list_tile.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
@@ -15,7 +16,12 @@ import 'components/selected_size.dart';
 import 'components/unit_price.dart';
 
 class ProductBuyNowScreen extends StatefulWidget {
-  const ProductBuyNowScreen({super.key});
+  final ProductDetailModel? productDetailModel;
+
+  const ProductBuyNowScreen({
+    super.key,
+    this.productDetailModel,
+  });
 
   @override
   _ProductBuyNowScreenState createState() => _ProductBuyNowScreenState();
@@ -26,7 +32,7 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: CartButton(
-        price: 269.4,
+        price: widget.productDetailModel?.price ?? 0,
         title: "Add to cart",
         subTitle: "Total price",
         press: () {
@@ -47,7 +53,7 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
               children: [
                 const BackButton(),
                 Text(
-                  "Sleeveless Ruffle",
+                  widget.productDetailModel?.name ?? '',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 IconButton(
@@ -76,10 +82,10 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: UnitPrice(
-                            price: 145,
-                            priceAfterDiscount: 134.7,
+                            price: widget.productDetailModel?.price ?? 0,
+                            priceAfterDiscount: widget.productDetailModel?.discountPrice ?? 0,
                           ),
                         ),
                         ProductQuantity(
@@ -128,8 +134,7 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                   ),
                 ),
                 SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: defaultPadding),
+                  padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
                   sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,8 +166,7 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                     },
                   ),
                 ),
-                const SliverToBoxAdapter(
-                    child: SizedBox(height: defaultPadding))
+                const SliverToBoxAdapter(child: SizedBox(height: defaultPadding))
               ],
             ),
           )

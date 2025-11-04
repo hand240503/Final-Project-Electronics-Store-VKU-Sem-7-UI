@@ -89,8 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void onCategorySelected(Map<String, dynamic> category) {
     final parentId = category['id'] as int;
-    print('Đã chọn category parent: $parentId');
-
     fetchProductsByType(parentId: parentId, type: 'popular');
     fetchProductsByType(parentId: parentId, type: 'sale');
     fetchProductsByType(parentId: parentId, type: 'best_sale');

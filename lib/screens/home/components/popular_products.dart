@@ -61,7 +61,7 @@ class ProductListSection extends StatelessWidget {
                       Navigator.pushNamed(
                         context,
                         productDetailsScreenRoute,
-                        arguments: product,
+                        arguments: product.id,
                       );
                     },
                   );

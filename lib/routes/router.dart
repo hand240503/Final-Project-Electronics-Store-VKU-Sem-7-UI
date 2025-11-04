@@ -12,36 +12,51 @@ Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
     case onbordingScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const OnBordingScreen(),
       );
+
     case logInScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const LoginScreen(),
       );
+
     case signUpScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const SignUpScreen(),
       );
+
     case entryPointScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const EntryPoint(),
       );
+
     case verifyCodeFormRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const VerifyCodeScreen(),
       );
+
     case productDetailsScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) {
-          return ProductDetailsScreen(isProductAvailable: true);
+          return ProductDetailsScreen();
         },
       );
+
     case walletScreenRoute:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const WalletScreen(),
       );
+
     default:
       return MaterialPageRoute(
+        settings: settings,
         builder: (context) => const OnBordingScreen(),
       );
   }

@@ -36,4 +36,16 @@ class ProductService {
       throw Exception('Failed to load products: ${response.statusCode}');
     }
   }
+
+  static Future<ProductDetailModel?> fetchProductDetail(int id) async {
+    final response = await http.get(Uri.parse(ApiEndpoints.productDetail(id)));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ProductDetailModel.fromJson(data);
+    } else {
+      print("Error: ${response.statusCode}");
+      return null;
+    }
+  }
 }

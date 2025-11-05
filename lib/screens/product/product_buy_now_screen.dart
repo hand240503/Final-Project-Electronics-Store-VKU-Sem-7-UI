@@ -4,15 +4,11 @@ import 'package:shop/components/cart_button.dart';
 import 'package:shop/components/network_image_with_loader.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:shop/screens/product/added_to_cart_message_screen.dart';
-import 'package:shop/screens/product/components/product_list_tile.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
-import 'package:shop/screens/product/location_permission_store_availability_screen.dart';
-import 'package:shop/screens/product/size_guide_screen.dart';
 
 import '../../constants.dart';
 import 'components/product_quantity.dart';
 import 'components/selected_colors.dart';
-import 'components/selected_size.dart';
 import 'components/unit_price.dart';
 
 class ProductBuyNowScreen extends StatefulWidget {
@@ -28,12 +24,24 @@ class ProductBuyNowScreen extends StatefulWidget {
 }
 
 class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
+  int quantity = 1;
+  int selectedColorIndex = 0;
+
+  List<Color> _getVariantColors() {
+    final variants = widget.productDetailModel?.variants ?? [];
+    return variants.map((v) => v.color).whereType<String>().map((hex) {
+      final cleanHex = hex.replaceAll('#', '').toUpperCase();
+      return Color(int.parse('0xFF$cleanHex'));
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colors = _getVariantColors();
     return Scaffold(
       bottomNavigationBar: CartButton(
-        price: widget.productDetailModel?.price ?? 0,
-        title: "Add to cart",
+        price: (widget.productDetailModel?.discountPrice ?? 0) * quantity,
+        title: "Buy Now",
         subTitle: "Total price",
         press: () {
           customModalBottomSheet(
@@ -58,8 +66,13 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                 ),
                 IconButton(
                   onPressed: () {},
-                  icon: SvgPicture.asset("assets/icons/Bookmark.svg",
-                      color: Theme.of(context).textTheme.bodyLarge!.color),
+                  icon: SvgPicture.asset(
+                    "assets/icons/Bookmark.svg",
+                    colorFilter: ColorFilter.mode(
+                      Theme.of(context).textTheme.bodyLarge!.color!,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -67,12 +80,12 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
           Expanded(
             child: CustomScrollView(
               slivers: [
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: defaultPadding),
                     child: AspectRatio(
                       aspectRatio: 1.05,
-                      child: NetworkImageWithLoader(productDemoImg1),
+                      child: NetworkImageWithLoader(widget.productDetailModel?.mainImage ?? ''),
                     ),
                   ),
                 ),
@@ -89,87 +102,41 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
                           ),
                         ),
                         ProductQuantity(
-                          numOfItem: 2,
-                          onIncrement: () {},
-                          onDecrement: () {},
+                          numOfItem: quantity,
+                          onIncrement: () {
+                            setState(() {
+                              quantity++;
+                            });
+                          },
+                          onDecrement: () {
+                            setState(() {
+                              if (quantity > 1) quantity--;
+                            });
+                          },
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SliverToBoxAdapter(child: Divider()),
-                SliverToBoxAdapter(
-                  child: SelectedColors(
-                    colors: const [
-                      Color(0xFFEA6262),
-                      Color(0xFFB1CC63),
-                      Color(0xFFFFBF5F),
-                      Color(0xFF9FE1DD),
-                      Color(0xFFC482DB),
-                    ],
-                    selectedColorIndex: 2,
-                    press: (value) {},
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: SelectedSize(
-                    sizes: const ["S", "M", "L", "XL", "XXL"],
-                    selectedIndex: 1,
-                    press: (value) {},
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: defaultPadding),
-                  sliver: ProductListTile(
-                    title: "Size guide",
-                    svgSrc: "assets/icons/Sizeguid.svg",
-                    isShowBottomBorder: true,
-                    press: () {
-                      customModalBottomSheet(
-                        context,
-                        height: MediaQuery.of(context).size.height * 0.9,
-                        child: const SizeGuideScreen(),
-                      );
-                    },
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: defaultPadding / 2),
-                        Text(
-                          "Store pickup availability",
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: defaultPadding / 2),
-                        const Text(
-                            "Select a size to check store availability and In-Store pickup options.")
-                      ],
+                if (colors.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SelectedColors(
+                      colors: colors,
+                      selectedColorIndex: selectedColorIndex,
+                      press: (value) {
+                        setState(() {
+                          selectedColorIndex = value;
+                        });
+                      },
                     ),
                   ),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: defaultPadding),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: defaultPadding),
-                  sliver: ProductListTile(
-                    title: "Check stores",
-                    svgSrc: "assets/icons/Stores.svg",
-                    isShowBottomBorder: true,
-                    press: () {
-                      customModalBottomSheet(
-                        context,
-                        height: MediaQuery.of(context).size.height * 0.92,
-                        child: const LocationPermissonStoreAvailabilityScreen(),
-                      );
-                    },
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: defaultPadding))
               ],
             ),
-          )
+          ),
         ],
       ),
     );

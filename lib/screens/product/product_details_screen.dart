@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:shop/components/buy_full_ui_kit.dart';
 import 'package:shop/components/cart_button.dart';
 import 'package:shop/components/product/product_card.dart';
 import 'package:shop/components/review_card.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/models/product_model.dart';
+import 'package:shop/screens/product/components/product_reviews.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
 import 'package:shop/screens/product/product_returns_screen.dart';
 import 'package:shop/services/products/product_service.dart';
@@ -82,7 +82,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Scaffold(
       bottomNavigationBar: productDetail?.isAvailable == true
           ? CartButton(
-              price: productDetail?.price ?? 0.0,
+              price: productDetail?.discountPrice ?? 0.0,
               press: () {
                 customModalBottomSheet(
                   context,
@@ -130,7 +130,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ProductListTile(
               svgSrc: "assets/icons/Delivery.svg",
               title: "Shipping Information",
-              press: () {},
+              press: () {
+                customModalBottomSheet(
+                  context,
+                  height: MediaQuery.of(context).size.height * 0.92,
+                  child: ProductReturnsScreen(
+                    des: productDetail?.shippingInfo.map((info) => "- ${info.info}").join('\n'),
+                  ),
+                );
+              },
             ),
             ProductListTile(
               svgSrc: "assets/icons/Return.svg",
@@ -140,7 +148,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 customModalBottomSheet(
                   context,
                   height: MediaQuery.of(context).size.height * 0.92,
-                  child: const ProductReturnsScreen(),
+                  child: ProductReturnsScreen(
+                    des: productDetail?.returnPolicy
+                        .map((policy) => "- ${policy.policyText}")
+                        .join('\n'),
+                  ),
                 );
               },
             ),
@@ -158,14 +170,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ),
               ),
             ),
-            ProductListTile(
-              svgSrc: "assets/icons/Chat.svg",
-              title: "Reviews",
-              isShowBottomBorder: true,
-              press: () {
-                // Navigator.pushNamed(context, productReviewsScreenRoute);
-              },
-            ),
+            ProductReviews(reviews: productDetail?.reviews ?? []),
             SliverPadding(
               padding: const EdgeInsets.all(defaultPadding),
               sliver: SliverToBoxAdapter(

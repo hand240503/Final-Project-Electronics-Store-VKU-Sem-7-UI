@@ -32,4 +32,8 @@ class ApiEndpoints {
     }
     return url;
   }
+
+  static String productDetail(int id) {
+    return "$baseUrl/api/products/$id/";
+  }
 }

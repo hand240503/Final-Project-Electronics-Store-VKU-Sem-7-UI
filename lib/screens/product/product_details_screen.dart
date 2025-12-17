@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:shop/components/buy_full_ui_kit.dart';
 import 'package:shop/components/cart_button.dart';
 import 'package:shop/components/product/product_card.dart';
 import 'package:shop/components/review_card.dart';
 import 'package:shop/constants.dart';
+import 'package:shop/models/product_model.dart';
+import 'package:shop/screens/product/components/product_reviews.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
 import 'package:shop/screens/product/product_returns_screen.dart';
+import 'package:shop/services/products/product_service.dart';
 
 import 'components/notify_me_card.dart';
 import 'components/product_images.dart';
@@ -14,28 +16,84 @@ import 'components/product_info.dart';
 import 'components/product_list_tile.dart';
 import 'product_buy_now_screen.dart';
 
-class ProductDetailsScreen extends StatelessWidget {
-  const ProductDetailsScreen({super.key, this.isProductAvailable = true});
+class ProductDetailsScreen extends StatefulWidget {
+  const ProductDetailsScreen({super.key});
 
-  final bool isProductAvailable;
+  @override
+  State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+}
+
+class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+  late int productId;
+  ProductDetailModel? productDetail;
+  bool isLoading = true;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args != null && args is int) {
+      productId = args;
+      _loadProductDetail(productId);
+    } else {
+      debugPrint("Không nhận được productId hợp lệ từ arguments: $args");
+    }
+  }
+
+  Future<void> _loadProductDetail(int id) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final detail = await ProductService.fetchProductDetail(id);
+    setState(() {
+      productDetail = detail;
+      isLoading = false;
+    });
+  }
+
+  Map<int, int> countStarRatings(List<ReviewModel> reviews) {
+    final Map<int, int> starCount = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+
+    for (var review in reviews) {
+      final int rating = review.rating.round().clamp(1, 5);
+      starCount[rating] = (starCount[rating] ?? 0) + 1;
+    }
+
+    return starCount;
+  }
+
+  double safeRating(double? rating) {
+    if (rating == null || rating.isNaN || rating.isInfinite) return 0.0;
+    return rating.clamp(0.0, 5.0);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final starStats = countStarRatings(productDetail?.reviews ?? []);
+
     return Scaffold(
-      bottomNavigationBar: isProductAvailable
+      bottomNavigationBar: productDetail?.isAvailable == true
           ? CartButton(
-              price: 140,
+              price: productDetail?.discountPrice ?? 0.0,
               press: () {
                 customModalBottomSheet(
                   context,
                   height: MediaQuery.of(context).size.height * 0.92,
-                  child: const ProductBuyNowScreen(),
+                  child: ProductBuyNowScreen(productDetailModel: productDetail),
                 );
               },
             )
           :
 
-          /// If profuct is not available then show [NotifyMeCard]
+          /// If product is not available then show [NotifyMeCard]
           NotifyMeCard(
               isNotify: false,
               onChanged: (value) {},
@@ -54,33 +112,33 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const ProductImages(
-              images: [productDemoImg1, productDemoImg2, productDemoImg3],
+            ProductImages(
+              images: [
+                if (productDetail?.mainImage != null) productDetail!.mainImage,
+                if (productDetail?.otherImages != null) ...productDetail!.otherImages,
+              ],
             ),
             ProductInfo(
-              brand: "LIPSY LONDON",
-              title: "Sleeveless Ruffle",
-              isAvailable: isProductAvailable,
+              brand: productDetail?.brand.name ?? '',
+              title: productDetail?.name ?? '',
+              isAvailable: productDetail?.isAvailable ?? false,
               description:
-                  "A cool gray cap in soft corduroy. Watch me.' By buying cotton products from Lindex, you’re supporting more responsibly...",
-              rating: 4.4,
-              numOfReviews: 126,
-            ),
-            ProductListTile(
-              svgSrc: "assets/icons/Product.svg",
-              title: "Product Details",
-              press: () {
-                customModalBottomSheet(
-                  context,
-                  height: MediaQuery.of(context).size.height * 0.92,
-                  child: const BuyFullKit(images: ["assets/screens/Product detail.png"]),
-                );
-              },
+                  productDetail?.description ?? 'No description available for this product.',
+              rating: productDetail?.rating ?? 0.0,
+              numOfReviews: productDetail?.reviews.length ?? 0,
             ),
             ProductListTile(
               svgSrc: "assets/icons/Delivery.svg",
               title: "Shipping Information",
-              press: () {},
+              press: () {
+                customModalBottomSheet(
+                  context,
+                  height: MediaQuery.of(context).size.height * 0.92,
+                  child: ProductReturnsScreen(
+                    des: productDetail?.shippingInfo.map((info) => "- ${info.info}").join('\n'),
+                  ),
+                );
+              },
             ),
             ProductListTile(
               svgSrc: "assets/icons/Return.svg",
@@ -90,32 +148,29 @@ class ProductDetailsScreen extends StatelessWidget {
                 customModalBottomSheet(
                   context,
                   height: MediaQuery.of(context).size.height * 0.92,
-                  child: const ProductReturnsScreen(),
+                  child: ProductReturnsScreen(
+                    des: productDetail?.returnPolicy
+                        .map((policy) => "- ${policy.policyText}")
+                        .join('\n'),
+                  ),
                 );
               },
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(defaultPadding),
                 child: ReviewCard(
-                  rating: 4.3,
-                  numOfReviews: 128,
-                  numOfFiveStar: 80,
-                  numOfFourStar: 30,
-                  numOfThreeStar: 5,
-                  numOfTwoStar: 4,
-                  numOfOneStar: 1,
+                  rating: safeRating(productDetail?.rating),
+                  numOfReviews: productDetail?.reviews.length ?? 0,
+                  numOfFiveStar: starStats[5] ?? 0,
+                  numOfFourStar: starStats[4] ?? 0,
+                  numOfThreeStar: starStats[3] ?? 0,
+                  numOfTwoStar: starStats[2] ?? 0,
+                  numOfOneStar: starStats[1] ?? 0,
                 ),
               ),
             ),
-            ProductListTile(
-              svgSrc: "assets/icons/Chat.svg",
-              title: "Reviews",
-              isShowBottomBorder: true,
-              press: () {
-                // Navigator.pushNamed(context, productReviewsScreenRoute);
-              },
-            ),
+            ProductReviews(reviews: productDetail?.reviews ?? []),
             SliverPadding(
               padding: const EdgeInsets.all(defaultPadding),
               sliver: SliverToBoxAdapter(

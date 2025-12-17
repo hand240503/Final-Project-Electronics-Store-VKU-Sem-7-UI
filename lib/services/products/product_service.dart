@@ -39,6 +39,18 @@ class ProductService {
     }
   }
 
+  static Future<ProductDetailModel?> fetchProductDetail(int id) async {
+    final response = await http.get(Uri.parse(ApiEndpoints.productDetail(id)));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ProductDetailModel.fromJson(data);
+    } else {
+      print("Error: ${response.statusCode}");
+      return null;
+    }
+  }
+
   /// Tìm kiếm sản phẩm
   static Future<List<ProductModel>> searchProducts(String query) async {
     if (query.isEmpty) {

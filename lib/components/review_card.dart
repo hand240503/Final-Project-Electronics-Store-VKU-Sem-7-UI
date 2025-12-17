@@ -18,11 +18,13 @@ class ReviewCard extends StatelessWidget {
 
   final double rating;
   final int numOfReviews;
-  final int numOfFiveStar,
-      numOfFourStar,
-      numOfThreeStar,
-      numOfTwoStar,
-      numOfOneStar;
+  final int numOfFiveStar, numOfFourStar, numOfThreeStar, numOfTwoStar, numOfOneStar;
+  double _safeValue(int part, int total) {
+    if (total <= 0) return 0;
+    final v = part / total;
+    if (v.isNaN || v.isInfinite) return 0;
+    return v.clamp(0, 1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +32,8 @@ class ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.035),
-        borderRadius:
-            const BorderRadius.all(Radius.circular(defaultBorderRadious)),
+        color: Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: .035),
+        borderRadius: const BorderRadius.all(Radius.circular(defaultBorderRadious)),
       ),
       child: Row(
         children: [
@@ -61,17 +62,13 @@ class ReviewCard extends StatelessWidget {
                   initialRating: rating,
                   itemSize: 20,
                   itemPadding: const EdgeInsets.only(right: defaultPadding / 4),
-                  unratedColor: Theme.of(context)
-                      .textTheme
-                      .bodyLarge!
-                      .color!
-                      .withOpacity(0.08),
+                  unratedColor:
+                      Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.08),
                   glow: false,
                   allowHalfRating: true,
                   ignoreGestures: true,
                   onRatingUpdate: (value) {},
-                  itemBuilder: (context, index) =>
-                      SvgPicture.asset("assets/icons/Star_filled.svg"),
+                  itemBuilder: (context, index) => SvgPicture.asset("assets/icons/Star_filled.svg"),
                 ),
               ],
             ),
@@ -80,11 +77,11 @@ class ReviewCard extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                RateBar(star: 5, value: numOfFiveStar / numOfReviews),
-                RateBar(star: 4, value: numOfFourStar / numOfReviews),
-                RateBar(star: 3, value: numOfThreeStar / numOfReviews),
-                RateBar(star: 2, value: numOfTwoStar / numOfReviews),
-                RateBar(star: 1, value: numOfOneStar / numOfReviews),
+                RateBar(star: 5, value: _safeValue(numOfFiveStar, numOfReviews)),
+                RateBar(star: 4, value: _safeValue(numOfFourStar, numOfReviews)),
+                RateBar(star: 3, value: _safeValue(numOfThreeStar, numOfReviews)),
+                RateBar(star: 2, value: _safeValue(numOfTwoStar, numOfReviews)),
+                RateBar(star: 1, value: _safeValue(numOfOneStar, numOfReviews)),
               ],
             ),
           ),
@@ -114,8 +111,10 @@ class RateBar extends StatelessWidget {
             width: 40,
             child: Text(
               "$star Star",
-              style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: Theme.of(context).textTheme.bodyMedium!.color),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall!
+                  .copyWith(color: Theme.of(context).textTheme.bodyMedium!.color),
             ),
           ),
           const SizedBox(width: defaultPadding / 2),
@@ -127,11 +126,8 @@ class RateBar extends StatelessWidget {
               child: LinearProgressIndicator(
                 minHeight: 6,
                 color: warningColor,
-                backgroundColor: Theme.of(context)
-                    .textTheme
-                    .bodyLarge!
-                    .color!
-                    .withOpacity(0.05),
+                backgroundColor:
+                    Theme.of(context).textTheme.bodyLarge!.color!.withValues(alpha: 0.05),
                 value: value,
               ),
             ),

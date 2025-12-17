@@ -44,7 +44,6 @@ class ProductModel {
     } else if (imageUrl.startsWith('https:/') && !imageUrl.startsWith('https://')) {
       imageUrl = imageUrl.replaceFirst('https:/', 'https://');
     }
-    print(imageUrl);
     return ProductModel(
       id: json['id'] ?? 0,
       title: json['name'] ?? '',
@@ -221,3 +220,172 @@ List<ProductModel> kidsProducts = [
     price: 250,
   ),
 ];
+
+class ProductDetailModel {
+  final int id;
+  final String name;
+  final String description;
+  final double price;
+  final double discountPrice;
+  final double rating;
+  final int numReviews;
+  final bool isAvailable;
+  final BrandModel brand;
+  final List<ProductVariantModel> variants;
+  final List<ReviewModel> reviews;
+  final List<ShippingInfoModel> shippingInfo;
+  final List<ReturnPolicyModel> returnPolicy;
+  final String mainImage;
+  final List<String> otherImages;
+
+  ProductDetailModel({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.discountPrice,
+    required this.rating,
+    required this.numReviews,
+    required this.isAvailable,
+    required this.brand,
+    required this.variants,
+    required this.reviews,
+    required this.shippingInfo,
+    required this.returnPolicy,
+    required this.mainImage,
+    required this.otherImages,
+  });
+
+  factory ProductDetailModel.fromJson(Map<String, dynamic> json) {
+    return ProductDetailModel(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'] ?? '',
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      discountPrice: double.tryParse(json['discount_price'].toString()) ?? 0.0,
+      rating: double.tryParse(json['rating'].toString()) ?? 0.0,
+      numReviews: json['num_reviews'] ?? 0,
+      isAvailable: json['is_available'] ?? false,
+      brand: BrandModel.fromJson(json['brand']),
+      variants: (json['variants'] as List<dynamic>?)
+              ?.map((v) => ProductVariantModel.fromJson(v))
+              .toList() ??
+          [],
+      reviews:
+          (json['reviews'] as List<dynamic>?)?.map((r) => ReviewModel.fromJson(r)).toList() ?? [],
+      shippingInfo: (json['shipping_info'] as List<dynamic>?)
+              ?.map((s) => ShippingInfoModel.fromJson(s))
+              .toList() ??
+          [],
+      returnPolicy: (json['return_policy'] as List<dynamic>?)
+              ?.map((p) => ReturnPolicyModel.fromJson(p))
+              .toList() ??
+          [],
+      mainImage: json['main_image'] ?? '',
+      otherImages:
+          (json['other_images'] as List<dynamic>?)?.map((i) => i.toString()).toList() ?? [],
+    );
+  }
+}
+
+class BrandModel {
+  final int id;
+  final String name;
+  final String? logoUrl;
+
+  BrandModel({required this.id, required this.name, this.logoUrl});
+
+  factory BrandModel.fromJson(Map<String, dynamic> json) {
+    return BrandModel(
+      id: json['id'],
+      name: json['name'],
+      logoUrl: json['logo_url'],
+    );
+  }
+}
+
+class ProductVariantModel {
+  final int id;
+  final String name;
+  final String color;
+  final String size;
+  final int stock;
+  final double price;
+  final double discountPrice;
+
+  ProductVariantModel({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.size,
+    required this.stock,
+    required this.price,
+    required this.discountPrice,
+  });
+
+  factory ProductVariantModel.fromJson(Map<String, dynamic> json) {
+    return ProductVariantModel(
+      id: json['id'],
+      name: json['name'],
+      color: json['color'],
+      size: json['size'],
+      stock: json['stock'],
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      discountPrice: double.tryParse(json['discount_price'].toString()) ?? 0.0,
+    );
+  }
+}
+
+class ReviewModel {
+  final int id;
+  final String user;
+  final int rating;
+  final String comment;
+  final String createdAt;
+
+  ReviewModel({
+    required this.id,
+    required this.user,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+  });
+
+  factory ReviewModel.fromJson(Map<String, dynamic> json) {
+    return ReviewModel(
+      id: json['id'],
+      user: json['user'],
+      rating: json['rating'],
+      comment: json['comment'],
+      createdAt: json['created_at'],
+    );
+  }
+}
+
+class ShippingInfoModel {
+  final int id;
+  final String info;
+
+  ShippingInfoModel({required this.id, required this.info});
+
+  factory ShippingInfoModel.fromJson(Map<String, dynamic> json) {
+    return ShippingInfoModel(
+      id: json['id'],
+      info: json['info'],
+    );
+  }
+}
+
+class ReturnPolicyModel {
+  final int id;
+  final String policyText;
+
+  ReturnPolicyModel({required this.id, required this.policyText});
+
+  factory ReturnPolicyModel.fromJson(Map<String, dynamic> json) {
+    return ReturnPolicyModel(
+      id: json['id'],
+      policyText: json['policy_text'],
+    );
+  }
+}

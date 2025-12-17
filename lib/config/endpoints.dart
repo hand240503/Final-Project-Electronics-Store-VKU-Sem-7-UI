@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = "http://192.168.239.1:8000";
+  static const String baseUrl = "http://10.0.2.2:8000";
   static const String login = "/api/accounts/login/";
   static const String register = "/api/accounts/register/";
   static const String refreshToken = "/api/accounts/token/refresh/";
@@ -9,6 +9,9 @@ class ApiEndpoints {
 
   static const String categories = "/api/categories/";
   static const String categoryTreeParents = "/api/products/categories-parents/";
+
+   /// Tìm kiếm sản phẩm
+  static const String searchProducts = "/api/products/search/";
 
   /// Lấy sản phẩm theo parent category
   /// Nếu parentId = 0, có thể truyền type (popular, sale, best_seller) qua query

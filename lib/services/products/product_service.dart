@@ -31,7 +31,9 @@ class ProductService {
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       final List<dynamic> productsJson = data['products'] ?? [];
-      return productsJson.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+      return productsJson
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     } else {
       throw Exception('Failed to load products: ${response.statusCode}');
     }
@@ -46,6 +48,37 @@ class ProductService {
     } else {
       print("Error: ${response.statusCode}");
       return null;
+    }
+  }
+
+  /// Tìm kiếm sản phẩm
+  static Future<List<ProductModel>> searchProducts(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${ApiEndpoints.baseUrl}${ApiEndpoints.searchProducts}?q=${Uri.encodeComponent(query)}',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Timeout'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final results = data['results'] as List;
+        return results.map((json) => ProductModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Lỗi: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('$e');
     }
   }
 }

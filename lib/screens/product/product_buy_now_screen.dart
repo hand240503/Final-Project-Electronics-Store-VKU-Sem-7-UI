@@ -44,6 +44,22 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
         title: "Buy Now",
         subTitle: "Total price",
         press: () {
+          final product = widget.productDetailModel;
+          final variants = product?.variants ?? [];
+
+          final selectedVariantId = variants.isNotEmpty ? variants[selectedColorIndex].id : null;
+
+          final totalPrice = (product?.discountPrice ?? 0) * quantity;
+
+          final Map<String, dynamic> jsonData = {
+            "productId": product?.id,
+            "variantId": selectedVariantId,
+            "quantity": quantity,
+            "totalPrice": totalPrice,
+          };
+
+          debugPrint("✅ DATA SENT: $jsonData");
+
           customModalBottomSheet(
             context,
             isDismissible: false,

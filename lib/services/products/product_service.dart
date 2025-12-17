@@ -31,7 +31,6 @@ class ProductService {
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       final List<dynamic> productsJson = data['products'] ?? [];
-      print(productsJson);
       return productsJson.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
     } else {
       throw Exception('Failed to load products: ${response.statusCode}');

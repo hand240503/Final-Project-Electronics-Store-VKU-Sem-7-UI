@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../constants.dart';
 import 'product_availability_tag.dart';
+import 'package:intl/intl.dart';
 
 class ProductInfo extends StatefulWidget {
   const ProductInfo({
@@ -12,12 +13,16 @@ class ProductInfo extends StatefulWidget {
     required this.rating,
     required this.numOfReviews,
     required this.isAvailable,
+    required this.price,
+    required this.discountPrice,
   });
 
   final String title, brand, description;
   final double rating;
   final int numOfReviews;
   final bool isAvailable;
+  final double price;
+  final double discountPrice;
 
   @override
   State<ProductInfo> createState() => _ProductInfoState();
@@ -25,6 +30,15 @@ class ProductInfo extends StatefulWidget {
 
 class _ProductInfoState extends State<ProductInfo> {
   bool _isExpanded = false;
+
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +60,27 @@ class _ProductInfoState extends State<ProductInfo> {
               widget.title,
               maxLines: 2,
               style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: defaultPadding),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formatVND(widget.discountPrice),
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatVND(widget.price),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey,
+                      ),
+                ),
+              ],
             ),
             const SizedBox(height: defaultPadding),
             Row(

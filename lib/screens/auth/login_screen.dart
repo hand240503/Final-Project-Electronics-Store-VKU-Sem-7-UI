@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushNamedAndRemoveUntil(
             context,
             entryPointScreenRoute,
-            ModalRoute.withName(logInScreenRoute),
+            ModalRoute.withName(loginScreenRoute),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

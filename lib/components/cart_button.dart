@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import '../constants.dart';
 
 class CartButton extends StatelessWidget {
@@ -14,6 +14,15 @@ class CartButton extends StatelessWidget {
   final double price;
   final String title, subTitle;
   final VoidCallback press;
+
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,24 +47,22 @@ class CartButton extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: defaultPadding),
+                      padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "\$${price.toStringAsFixed(2)}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall!
-                                .copyWith(color: Colors.white),
+                            formatVND(price),
+                            style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                           Text(
                             subTitle,
-                            style: const TextStyle(
-                                color: Colors.white54,
-                                fontWeight: FontWeight.w500),
+                            style:
+                                const TextStyle(color: Colors.white54, fontWeight: FontWeight.w500),
                           )
                         ],
                       ),
@@ -69,10 +76,8 @@ class CartButton extends StatelessWidget {
                       color: Colors.black.withOpacity(0.15),
                       child: Text(
                         title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall!
-                            .copyWith(color: Colors.white),
+                        style:
+                            Theme.of(context).textTheme.titleSmall!.copyWith(color: Colors.white),
                       ),
                     ),
                   ),

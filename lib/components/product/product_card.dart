@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import '../../constants.dart';
 import '../network_image_with_loader.dart';
 
@@ -19,6 +19,15 @@ class ProductCard extends StatelessWidget {
   final double? priceAfterDiscount;
   final int? discountPercent;
   final VoidCallback press;
+
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +88,7 @@ class ProductCard extends StatelessWidget {
                       ? Row(
                           children: [
                             Text(
-                              "\$$priceAfterDiscount",
+                              formatVND(priceAfterDiscount!),
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,
@@ -88,7 +97,7 @@ class ProductCard extends StatelessWidget {
                             ),
                             const SizedBox(width: defaultPadding / 4),
                             Text(
-                              "\$$price",
+                              formatVND(price),
                               style: TextStyle(
                                 color: Theme.of(context).textTheme.bodyMedium!.color,
                                 fontSize: 10,

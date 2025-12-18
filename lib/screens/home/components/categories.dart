@@ -6,10 +6,10 @@ import '../../../../constants.dart';
 
 List<CategoryModel> demoCategories = [
   CategoryModel(title: "All Categories"),
-  CategoryModel(title: "On Sale", svgSrc: "assets/icons/Sale.svg", route: logInScreenRoute),
+  CategoryModel(title: "On Sale", svgSrc: "assets/icons/Sale.svg", route: loginScreenRoute),
   CategoryModel(title: "Man's", svgSrc: "assets/icons/Man.svg"),
   CategoryModel(title: "Woman’s", svgSrc: "assets/icons/Woman.svg"),
-  CategoryModel(title: "Kids", svgSrc: "assets/icons/Child.svg", route: logInScreenRoute),
+  CategoryModel(title: "Kids", svgSrc: "assets/icons/Child.svg", route: loginScreenRoute),
 ];
 
 class Categories extends StatefulWidget {

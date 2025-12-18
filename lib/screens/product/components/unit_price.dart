@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import '../../../constants.dart';
 
 class UnitPrice extends StatelessWidget {
@@ -12,8 +12,19 @@ class UnitPrice extends StatelessWidget {
   final double price;
   final double? priceAfterDiscount;
 
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool hasDiscount = priceAfterDiscount != null && priceAfterDiscount! < price;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -22,23 +33,24 @@ class UnitPrice extends StatelessWidget {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: defaultPadding / 1),
-        Text.rich(
-          TextSpan(
-            text: priceAfterDiscount == null
-                ? "\$${price.toStringAsFixed(2)}  "
-                : "\$${priceAfterDiscount!.toStringAsFixed(2)}  ",
-            style: Theme.of(context).textTheme.titleLarge,
-            children: [
-              if (priceAfterDiscount != null)
-                TextSpan(
-                  text: "\$${price.toStringAsFixed(2)}",
-                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                      color: Theme.of(context).textTheme.bodyMedium!.color,
-                      decoration: TextDecoration.lineThrough),
-                ),
-            ],
+        Text(
+          formatVND(hasDiscount ? priceAfterDiscount! : price),
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        if (hasDiscount)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              formatVND(price),
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+            ),
           ),
-        )
       ],
     );
   }

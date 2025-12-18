@@ -126,6 +126,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   productDetail?.description ?? 'No description available for this product.',
               rating: productDetail?.rating ?? 0.0,
               numOfReviews: productDetail?.reviews.length ?? 0,
+              price: productDetail?.price ?? 0.0,
+              discountPrice: productDetail?.discountPrice ?? 0.0,
             ),
             ProductListTile(
               svgSrc: "assets/icons/Delivery.svg",

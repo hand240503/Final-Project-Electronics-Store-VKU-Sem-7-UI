@@ -10,7 +10,7 @@ import '../../constants.dart';
 import 'components/product_quantity.dart';
 import 'components/selected_colors.dart';
 import 'components/unit_price.dart';
-
+import 'package:intl/intl.dart';
 class ProductBuyNowScreen extends StatefulWidget {
   final ProductDetailModel? productDetailModel;
 
@@ -33,6 +33,15 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
       final cleanHex = hex.replaceAll('#', '').toUpperCase();
       return Color(int.parse('0xFF$cleanHex'));
     }).toList();
+  }
+
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
   }
 
   @override

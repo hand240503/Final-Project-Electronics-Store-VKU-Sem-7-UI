@@ -21,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _agreeTerms = false;
 
   final AuthService _authService = AuthService(storage: FlutterSecureStorage());
-  final FlutterSecureStorage storage = FlutterSecureStorage();  
+  final FlutterSecureStorage storage = FlutterSecureStorage();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,7 +168,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         const Text("Do you have an account?"),
         TextButton(
           onPressed: () {
-            Navigator.pushNamed(context, logInScreenRoute);
+            Navigator.pushNamed(context, loginScreenRoute);
           },
           child: const Text("Log in"),
         ),

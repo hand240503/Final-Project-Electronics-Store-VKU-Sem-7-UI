@@ -47,7 +47,7 @@ class BestSellers extends StatelessWidget {
                 press: () {
                   Navigator.pushNamed(
                     context,
-                    logInScreenRoute,
+                    loginScreenRoute,
                     arguments: index.isEven,
                   );
                 },

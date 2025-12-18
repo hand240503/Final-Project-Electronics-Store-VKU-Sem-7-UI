@@ -160,7 +160,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               Navigator.pushNamed(
                 context,
                 productDetailsScreenRoute,
-                arguments: product,
+                arguments: product.id,
               );
             },
           ),

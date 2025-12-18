@@ -10,7 +10,7 @@ class ApiEndpoints {
   static const String categories = "/api/categories/";
   static const String categoryTreeParents = "/api/products/categories-parents/";
 
-   /// Tìm kiếm sản phẩm
+  /// Tìm kiếm sản phẩm
   static const String searchProducts = "/api/products/search/";
 
   /// Lấy sản phẩm theo parent category
@@ -34,6 +34,6 @@ class ApiEndpoints {
   }
 
   static String productDetail(int id) {
-    return "$baseUrl/api/products/$id/";
+    return "$baseUrl/api/products/app/$id/";
   }
 }

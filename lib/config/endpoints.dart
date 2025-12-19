@@ -50,4 +50,16 @@ class ApiEndpoints {
   // ================= ORDER =================
   /// Tạo đơn hàng
   static const String addOrder = "/api/orders/create/";
+
+  static String ordersByUser(int userId) {
+    return "$baseUrl/api/orders/user/$userId/";
+  }
+
+  static String orderDetail(int orderId) {
+    return "$baseUrl/api/orders/$orderId/";
+  }
+
+  static String cancelOrder(int orderId) {
+    return "$baseUrl/api/orders/cancel/$orderId/";
+  }
 }

@@ -18,6 +18,7 @@ import 'package:shop/screens/auth/verify_code_screen.dart';
 import 'package:shop/screens/address/address_screen.dart';
 import 'package:shop/screens/address/add_address_screen.dart';
 import 'package:shop/screens/address/update_address_screen.dart';
+import 'package:shop/screens/order/order_screen.dart';
 
 // Product
 import 'package:shop/screens/product/product_details_screen.dart';
@@ -95,7 +96,12 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         settings: settings,
         builder: (context) => const WalletScreen(),
       );
-
+    //Order List
+    case listOrderScreenRoute:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const OrderHistoryScreen(),
+      );
     // Entry Point
     case entryPointScreenRoute:
       return MaterialPageRoute(

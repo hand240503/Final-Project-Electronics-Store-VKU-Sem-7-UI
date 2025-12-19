@@ -3,14 +3,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shop/components/cart_button.dart';
 import 'package:shop/components/network_image_with_loader.dart';
 import 'package:shop/models/product_model.dart';
+import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/product/added_to_cart_message_screen.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
+import 'package:shop/screens/product/product_order_screen.dart';
 
 import '../../constants.dart';
 import 'components/product_quantity.dart';
 import 'components/selected_colors.dart';
 import 'components/unit_price.dart';
 import 'package:intl/intl.dart';
+
 class ProductBuyNowScreen extends StatefulWidget {
   final ProductDetailModel? productDetailModel;
 
@@ -58,21 +61,15 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
 
           final selectedVariantId = variants.isNotEmpty ? variants[selectedColorIndex].id : null;
 
-          final totalPrice = (product?.discountPrice ?? 0) * quantity;
-
-          final Map<String, dynamic> jsonData = {
-            "productId": product?.id,
-            "variantId": selectedVariantId,
-            "quantity": quantity,
-            "totalPrice": totalPrice,
-          };
-
-          debugPrint("✅ DATA SENT: $jsonData");
-
-          customModalBottomSheet(
+          // Chuyển sang ProductOrderScreen
+          Navigator.pushNamed(
             context,
-            isDismissible: false,
-            child: const AddedToCartMessageScreen(),
+            productOrderScreenRoute,
+            arguments: {
+              'productDetailModel': product, // instance ProductDetailModel
+              'quantity': quantity,
+              'selectedVariantId': selectedVariantId,
+            },
           );
         },
       ),

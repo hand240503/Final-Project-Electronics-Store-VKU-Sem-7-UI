@@ -78,7 +78,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ProfileMenuListTile(
             text: "Orders",
             svgSrc: "assets/icons/Order.svg",
-            press: () {},
+            press: () {
+              Navigator.pushNamed(context, listOrderScreenRoute);
+            },
           ),
           ProfileMenuListTile(
             text: "Returns",

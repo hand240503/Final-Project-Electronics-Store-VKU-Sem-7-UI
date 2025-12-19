@@ -10,3 +10,5 @@ const String walletScreenRoute = "wallet";
 const String userAddressScreenRoute = "user_address";
 const String addAddressScreenRoute = "add_address";
 const String editAddressScreenRoute = "edit_address";
+const String productOrderScreenRoute = "product_order";
+const String listOrderScreenRoute = "list_order";

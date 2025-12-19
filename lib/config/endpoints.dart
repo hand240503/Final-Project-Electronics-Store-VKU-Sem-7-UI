@@ -14,16 +14,11 @@ class ApiEndpoints {
   }
 
   // ================= ADDRESS =================
-
-  /// Thêm địa chỉ mới
   static const String addAddress = "/api/accounts/addresses/add/";
-
-  /// Lấy danh sách địa chỉ theo user_id (admin hoặc chính user)
   static String addressesByUserId(int userId) {
     return "/api/accounts/addresses/user/$userId/";
   }
 
-  /// (Khuyến nghị) Lấy địa chỉ của user đang đăng nhập
   static const String myAddresses = "/api/accounts/addresses/user/";
 
   // ================= CATEGORY =================
@@ -31,11 +26,7 @@ class ApiEndpoints {
   static const String categoryTreeParents = "/api/products/categories-parents/";
 
   // ================= PRODUCT =================
-
-  /// Tìm kiếm sản phẩm
   static const String searchProducts = "/api/products/search/";
-
-  /// Lấy sản phẩm theo parent category
   static String productsByCategoryParentId(int parentId, {String? type}) {
     String url = "/api/products/parent-categories/$parentId/";
     if (type != null && type.isNotEmpty) {
@@ -44,7 +35,6 @@ class ApiEndpoints {
     return url;
   }
 
-  /// Lấy sản phẩm theo category cụ thể
   static String productsByCategoryId(int categoryId, {String? type}) {
     String url = "/api/products/categories/$categoryId/";
     if (type != null && type.isNotEmpty) {
@@ -53,8 +43,23 @@ class ApiEndpoints {
     return url;
   }
 
-  /// Chi tiết sản phẩm (full URL)
   static String productDetail(int id) {
     return "$baseUrl/api/products/app/$id/";
+  }
+
+  // ================= ORDER =================
+  /// Tạo đơn hàng
+  static const String addOrder = "/api/orders/create/";
+
+  static String ordersByUser(int userId) {
+    return "$baseUrl/api/orders/user/$userId/";
+  }
+
+  static String orderDetail(int orderId) {
+    return "$baseUrl/api/orders/$orderId/";
+  }
+
+  static String cancelOrder(int orderId) {
+    return "$baseUrl/api/orders/cancel/$orderId/";
   }
 }

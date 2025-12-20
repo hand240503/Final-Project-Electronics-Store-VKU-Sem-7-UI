@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/screens/bookmark/bookmark_screen.dart';
-import 'package:shop/screens/checkout/cart_screen.dart';
+import 'package:shop/screens/cart/cart_screen.dart';
 import 'package:shop/screens/discover/discover_screen.dart';
 import 'package:shop/screens/home/home_screen.dart';
 import 'package:shop/screens/profile/profile_screen.dart';

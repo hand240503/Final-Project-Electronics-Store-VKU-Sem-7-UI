@@ -2,23 +2,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shop/constants.dart';
+import 'package:shop/models/order_model.dart';
 import 'package:shop/models/product_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shop/routes/route_constants.dart';
 import 'package:shop/services/orders/order_service.dart';
+import 'package:shop/services/orders/order_success_screen.dart';
 
 final storage = FlutterSecureStorage();
 
 class ProductOrderScreen extends StatefulWidget {
-  final ProductDetailModel? productDetailModel;
-  final int quantity;
-  final int? selectedVariantId;
+  final List<OrderItem> orderItems;
 
   const ProductOrderScreen({
     super.key,
-    required this.productDetailModel,
-    this.quantity = 1,
-    this.selectedVariantId,
+    required this.orderItems,
   });
 
   @override
@@ -57,6 +56,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         'is_active': isActiveStr == 'true',
       };
       addresses = addressList;
+
       selectedAddress = addresses.firstWhere(
         (addr) => addr['is_default'] == true,
         orElse: () => addresses.isNotEmpty ? addresses[0] : null,
@@ -66,12 +66,21 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   }
 
   void navigateToAddressSelection() async {
-    final result = await Navigator.pushNamed(context, '/address_selection');
+    final result = await Navigator.pushNamed(context, userAddressScreenRoute);
     if (result != null) {
-      setState(() {
-        selectedAddress = result;
-      });
+      await loadUserData();
     }
+  }
+
+  int get totalQuantity {
+    return widget.orderItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  int get subtotal {
+    return widget.orderItems.fold(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
   }
 
   void placeOrder() async {
@@ -82,13 +91,28 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       return;
     }
 
-    final product = widget.productDetailModel;
+    // Tạo list items
+    final items = widget.orderItems.map((item) {
+      return {
+        "product_id": item.productId,
+        "variant_id": item.selectedVariantId,
+        "quantity": item.quantity,
+        "price": item.price,
+      };
+    }).toList();
 
+    final int calculatedTotal = items.fold<int>(0, (sum, item) {
+      final price = (item['price'] as num).toDouble();
+      final quantity = item['quantity'] as int;
+      return sum + (price * quantity).toInt();
+    });
+    final oderCode = "#${DateTime.now().millisecondsSinceEpoch}";
     final Map<String, dynamic> orderPayload = {
-      "totalPrice": (product?.discountPrice ?? 0) * widget.quantity,
+      "totalPrice": calculatedTotal,
       "hasInsurance": hasInsurance,
       "note": "",
       "discountCode": "",
+      "orderCode": oderCode,
       "address": {
         "full_name": selectedAddress['full_name'],
         "phone": selectedAddress['phone'],
@@ -97,14 +121,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         "district": selectedAddress['district'],
         "city": selectedAddress['city'],
       },
-      "items": [
-        {
-          "product_id": product?.id,
-          "variant_id": widget.selectedVariantId,
-          "quantity": widget.quantity,
-          "price": product?.discountPrice ?? 0,
-        }
-      ]
+      "items": items,
     };
 
     debugPrint("✅ ORDER DATA SENT: $orderPayload");
@@ -112,8 +129,15 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     final result = await OrderService.createOrder(orderPayload);
 
     if (result['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Đơn hàng đã được tạo!")),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderSuccessScreen(
+            orderId: oderCode,
+            totalAmount: calculatedTotal,
+            orderDate: DateTime.now(),
+          ),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,10 +148,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.productDetailModel;
-    final productPrice = product?.discountPrice ?? 0;
     final insurancePrice = 31499;
-    final subtotal = productPrice * widget.quantity;
     final shippingDiscount = 37700;
     final total = subtotal + (hasInsurance ? insurancePrice : 0);
 
@@ -159,7 +180,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       children: [
                         _buildAddressSection(),
                         const SizedBox(height: 8),
-                        _buildProductSection(product),
+                        _buildProductsSection(),
                         const SizedBox(height: 8),
                         _buildVoucherSection(),
                         const SizedBox(height: 8),
@@ -171,7 +192,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                     ),
                   ),
                 ),
-                _buildBottomBar(subtotal.toInt(), total.toInt(), shippingDiscount),
+                _buildBottomBar(subtotal, total, shippingDiscount),
               ],
             ),
     );
@@ -229,8 +250,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
-  Widget _buildProductSection(ProductDetailModel? product) {
-    final formattedPrice = NumberFormat('#,###', 'vi_VN').format(product?.discountPrice);
+  Widget _buildProductsSection() {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(16),
@@ -249,75 +269,96 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: product?.mainImage.isNotEmpty == true
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          product!.mainImage,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Icon(Icons.image, size: 40),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product?.name ?? 'Tên sản phẩm',
-                      style: GoogleFonts.roboto(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+          ...widget.orderItems.map((item) => _buildProductItem(item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductItem(OrderItem item) {
+    final formattedPrice = NumberFormat('#,###', 'vi_VN').format(item.price);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: item.image.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      item.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.image, size: 40, color: Colors.grey);
+                      },
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product?.brand.name ?? '',
+                  )
+                : const Icon(Icons.image, size: 40, color: Colors.grey),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                if (item.brandName != null)
+                  Text(
+                    item.brandName!,
+                    style: GoogleFonts.roboto(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                if (item.variantName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      item.variantName!,
                       style: GoogleFonts.roboto(
                         fontSize: 12,
                         color: Colors.grey.shade600,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${formattedPrice ?? '0'}đ',
-                          style: GoogleFonts.roboto(
-                              color: primaryMaterialColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'x${widget.quantity}',
-                          style: GoogleFonts.roboto(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$formattedPriceđ',
+                      style: GoogleFonts.roboto(
+                          color: primaryMaterialColor, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'x${item.quantity}',
+                      style: GoogleFonts.roboto(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -534,7 +575,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Tổng số tiền (${widget.quantity} sản phẩm)',
+                    'Tổng số tiền ($totalQuantity sản phẩm)',
                     style: GoogleFonts.roboto(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -559,13 +600,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                         ),
                       ),
                     ],
-                  ),
-                  Text(
-                    'Tiết kiệm $discountđ',
-                    style: GoogleFonts.roboto(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
                   ),
                 ],
               ),

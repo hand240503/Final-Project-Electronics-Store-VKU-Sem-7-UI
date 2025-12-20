@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -63,9 +65,19 @@ class _AddressScreenState extends State<AddressScreen> {
     });
 
     try {
+      // Gọi API cập nhật address
       await AddressService.updateAddress(
         address: address.copyWith(isDefault: true),
       );
+
+      // Lưu lại toàn bộ addresses vào storage
+      final addressesJson = jsonEncode(
+        _addresses.map((a) => a.toJson()).toList(),
+      );
+      await _storage.write(key: 'addresses', value: addressesJson);
+
+      // ✅ Trả về địa chỉ đã chọn dưới dạng Map để tương thích với ProductOrderScreen
+      Navigator.pop(context, address.toJson());
     } catch (e) {
       // Rollback nếu API lỗi
       setState(() {

@@ -16,6 +16,32 @@ class OrderDetailScreen extends StatelessWidget {
     return '${formatter.format(number)}₫';
   }
 
+  String _getPaymentStatusText(int status, Map order) {
+    switch (status) {
+      case 3:
+        return 'Đơn hàng đã hoàn thành';
+      case 4:
+        return 'Đơn hàng đang được kiểm tra';
+      case 5:
+        return 'Đã hủy đơn hàng';
+      default:
+        return 'Thanh toán bằng ${order['payment_method']?.toString() ?? 'Thanh toán khi nhận hàng'}';
+    }
+  }
+
+  Color _getPaymentStatusColor(int status) {
+    switch (status) {
+      case 3:
+        return Colors.green;
+      case 4:
+        return Colors.orange;
+      case 5:
+        return Colors.red;
+      default:
+        return Colors.black87;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,8 +122,12 @@ class OrderDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Thanh toán bằng ${order['payment_method']?.toString() ?? 'Thanh toán khi nhận hàng'}',
-                          style: GoogleFonts.roboto(fontSize: 15),
+                          _getPaymentStatusText(status, order),
+                          style: GoogleFonts.roboto(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: _getPaymentStatusColor(status),
+                          ),
                         ),
                       ),
                     ],
@@ -202,8 +232,6 @@ class OrderDetailScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const Spacer(),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
                         ],
                       ),
                       const SizedBox(height: 16),

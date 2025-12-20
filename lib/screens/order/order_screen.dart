@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/order/order_detail_screen.dart';
 import 'package:shop/services/orders/order_service.dart';
 import 'package:intl/intl.dart';
@@ -33,6 +36,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     5: false,
   };
 
+  // Map để lưu số lượng đơn hàng theo status
+  final Map<int, int> _orderCountByStatus = {
+    0: 0,
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  };
+
+  bool _isLoadingCounts = false;
+
   @override
   void initState() {
     super.initState();
@@ -45,12 +60,90 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       }
     });
 
+    // Load số lượng đơn hàng cho tất cả các status
+    _fetchAllOrderCounts();
+
     // Load data tab đầu tiên
     _fetchOrdersByStatus(0);
+    _fetchOrdersByStatus(1);
+    _fetchOrdersByStatus(2);
+    _fetchOrdersByStatus(3);
+    _fetchOrdersByStatus(4);
+    _fetchOrdersByStatus(5);
+  }
+
+  final storage = const FlutterSecureStorage();
+
+  Future<void> _fetchAllOrderCounts() async {
+    setState(() {
+      _isLoadingCounts = true;
+    });
+
+    try {
+      // Lấy user_id từ storage
+      final userIdStr = await storage.read(key: 'user_id');
+      if (userIdStr == null) {
+        throw Exception('User chưa đăng nhập');
+      }
+      final userId = int.tryParse(userIdStr);
+      if (userId == null) {
+        throw Exception('User ID không hợp lệ');
+      }
+
+      // Gọi API getOrdersByUser với userId từ storage
+      final response = await OrderService.getOrdersByUser(userId);
+
+      if (response['success'] == true) {
+        final orders = response['data'] as List;
+
+        // Đếm số lượng đơn hàng theo từng status
+        final Map<int, int> counts = {
+          0: 0,
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 0,
+          5: 0,
+        };
+
+        for (var order in orders) {
+          final status = order['status'] as int;
+          if (counts.containsKey(status)) {
+            counts[status] = counts[status]! + 1;
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _orderCountByStatus.addAll(counts);
+            _isLoadingCounts = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingCounts = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCounts = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchOrdersByStatus(int status) async {
-    // Nếu đã load rồi thì không load lại
+    final userIdStr = await storage.read(key: 'user_id');
+    if (userIdStr == null) {
+      throw Exception('User chưa đăng nhập');
+    }
+    final userId = int.tryParse(userIdStr);
+    if (userId == null) {
+      throw Exception('User ID không hợp lệ');
+    }
     if (_ordersByStatus[status]!.isNotEmpty) return;
 
     setState(() {
@@ -58,8 +151,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     });
 
     try {
-      // Gọi API getOrdersByUser (giả sử userId = 7)
-      final response = await OrderService.getOrdersByUser(7);
+      final response = await OrderService.getOrdersByUser(userId);
 
       if (response['success']) {
         final orders = response['data'] as List;
@@ -167,6 +259,38 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     }
   }
 
+  // Widget tạo tab với số lượng
+  Widget _buildTabWithCount(String label, int status) {
+    final count = _orderCountByStatus[status] ?? 0;
+
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (count > 0) ...[
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE85D4D),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count > 99 ? '99+' : count.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -182,7 +306,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFFE85D4D)),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.pushNamed(context, entryPointScreenRoute),
         ),
         title: const Text(
           'Đơn đã mua',
@@ -215,13 +339,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            tabs: const [
-              Tab(text: 'Chờ xác nhận'),
-              Tab(text: 'Chờ lấy hàng'),
-              Tab(text: 'Chờ giao hàng'),
-              Tab(text: 'Đã giao'),
-              Tab(text: 'Trả hàng'),
-              Tab(text: 'Đã hủy'),
+            tabs: [
+              _buildTabWithCount('Chờ xác nhận', 0),
+              _buildTabWithCount('Chờ lấy hàng', 1),
+              _buildTabWithCount('Chờ giao hàng', 2),
+              _buildTabWithCount('Đã giao', 3),
+              _buildTabWithCount('Trả hàng', 4),
+              _buildTabWithCount('Đã hủy', 5),
             ],
           ),
         ),
@@ -265,6 +389,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           _ordersByStatus[status] = [];
         });
         await _fetchOrdersByStatus(status);
+        await _fetchAllOrderCounts(); // Cập nhật lại số lượng
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(0),
@@ -444,7 +569,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   const Spacer(),
                   Text(
                     _getStatusName(status),
-                    style: TextStyle(
+                    style: GoogleFonts.roboto(
                       color: _getStatusColor(status),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -629,12 +754,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Đã hủy đơn hàng')),
                         );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => OrderHistoryScreen(),
-                          ),
-                        ); // đóng trang chi tiết đơn
+                        // Reset data và reload
+                        setState(() {
+                          _ordersByStatus[0] = [];
+                          _ordersByStatus[5] = [];
+                        });
+                        await _fetchAllOrderCounts();
+                        await _fetchOrdersByStatus(status);
                       }
                     } else {
                       if (context.mounted) {
@@ -679,9 +805,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
+                child: Text(
                   'Đánh giá',
-                  style: TextStyle(fontSize: 14),
+                  style: GoogleFonts.roboto(fontSize: 14),
                 ),
               ),
             )

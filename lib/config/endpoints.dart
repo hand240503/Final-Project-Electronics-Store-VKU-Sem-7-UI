@@ -62,4 +62,25 @@ class ApiEndpoints {
   static String cancelOrder(int orderId) {
     return "$baseUrl/api/orders/cancel/$orderId/";
   }
+
+  // ================= CART =================
+  /// Thêm sản phẩm vào giỏ hàng
+  static const String addToCart = "/api/cart/add/";
+
+  /// Lấy giỏ hàng theo user_id
+  static String cartByUserId(int userId) {
+    return "/api/cart/$userId/";
+  }
+
+  /// Cập nhật số lượng cart item
+  static String updateCartItem(int cartItemId) {
+    return "/api/cart/$cartItemId/update/";
+  }
+
+  /// Xóa cart item
+  static String deleteCartItem(int cartItemId) {
+    return "/api/cart/$cartItemId/delete/";
+  }
+
+  
 }

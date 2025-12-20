@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:shop/models/user_model.dart';
 import 'package:shop/routes/route_constants.dart';
 import 'package:shop/services/users/address_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AddressScreen extends StatefulWidget {
   const AddressScreen({super.key});
@@ -15,9 +15,12 @@ class AddressScreen extends StatefulWidget {
 
 class _AddressScreenState extends State<AddressScreen> {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  late Future<List<UserAddress>> _addressesFuture;
 
-  int? _selectedIndex; // index của address mặc định
+  late Future<List<UserAddress>> _addressesFuture;
+  List<UserAddress> _addresses = [];
+
+  int? _selectedIndex;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -30,10 +33,12 @@ class _AddressScreenState extends State<AddressScreen> {
     if (userIdStr == null) {
       throw Exception("User not logged in");
     }
+
     final userId = int.parse(userIdStr);
     final addresses = await AddressService.getAddressesByUserId(userId: userId);
 
-    // tìm index address mặc định
+    _addresses = addresses;
+
     final defaultIndex = addresses.indexWhere((a) => a.isDefault);
     if (defaultIndex != -1) {
       _selectedIndex = defaultIndex;
@@ -42,16 +47,42 @@ class _AddressScreenState extends State<AddressScreen> {
     return addresses;
   }
 
-  void _onSelectAddress(int index) {
+  Future<void> _onSelectAddress(int index, UserAddress address) async {
+    if (_isUpdating) return;
+    _isUpdating = true;
+
+    final previousIndex = _selectedIndex;
+    final previousAddresses = List<UserAddress>.from(_addresses);
+
+    // Update UI trước (optimistic update)
     setState(() {
       _selectedIndex = index;
+      _addresses = _addresses.map((a) {
+        return a.id == address.id ? a.copyWith(isDefault: true) : a.copyWith(isDefault: false);
+      }).toList();
     });
+
+    try {
+      await AddressService.updateAddress(
+        address: address.copyWith(isDefault: true),
+      );
+    } catch (e) {
+      // Rollback nếu API lỗi
+      setState(() {
+        _selectedIndex = previousIndex;
+        _addresses = previousAddresses;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Không thể chọn địa chỉ này")),
+      );
+    } finally {
+      _isUpdating = false;
+    }
   }
 
   void _onAddAddress() {
-    // Navigate tới màn hình thêm địa chỉ
     Navigator.pushNamed(context, addAddressScreenRoute).then((_) {
-      // reload list sau khi add
       setState(() {
         _addressesFuture = _loadAddressesFuture();
       });
@@ -59,8 +90,11 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   void _onEditAddress(UserAddress address) {
-    // Navigate tới màn hình sửa địa chỉ
-    Navigator.pushNamed(context, editAddressScreenRoute, arguments: address).then((_) {
+    Navigator.pushNamed(
+      context,
+      editAddressScreenRoute,
+      arguments: address,
+    ).then((_) {
       setState(() {
         _addressesFuture = _loadAddressesFuture();
       });
@@ -90,17 +124,16 @@ class _AddressScreenState extends State<AddressScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _onSelectAddress(index),
+          onTap: () => _onSelectAddress(index, address),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row with radio and name
                 Row(
                   children: [
-                    // Custom radio button
+                    // Radio
                     Container(
                       width: 24,
                       height: 24,
@@ -113,16 +146,12 @@ class _AddressScreenState extends State<AddressScreen> {
                         color: isSelected ? Colors.blue : Colors.transparent,
                       ),
                       child: isSelected
-                          ? const Icon(
-                              Icons.check,
-                              size: 16,
-                              color: Colors.white,
-                            )
+                          ? const Icon(Icons.check, size: 16, color: Colors.white)
                           : null,
                     ),
                     const SizedBox(width: 12),
 
-                    // Name and default badge
+                    // Name + default badge
                     Expanded(
                       child: Row(
                         children: [
@@ -134,23 +163,14 @@ class _AddressScreenState extends State<AddressScreen> {
                                 fontSize: 16,
                               ),
                               overflow: TextOverflow.ellipsis,
-                              softWrap: false,
                             ),
                           ),
                           if (address.isDefault) ...[
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.orange.shade300,
-                                    Colors.orange.shade400,
-                                  ],
-                                ),
+                                color: Colors.orange.shade400,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
@@ -167,107 +187,33 @@ class _AddressScreenState extends State<AddressScreen> {
                       ),
                     ),
 
-                    // Edit button
+                    // Edit
                     InkWell(
                       onTap: () => _onEditAddress(address),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 16,
-                              color: Colors.blue.shade700,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Sửa",
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: const Icon(Icons.edit_outlined, color: Colors.blue),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // Divider
-                Container(
-                  height: 1,
-                  color: Colors.grey.shade200,
-                ),
-
+                Divider(color: Colors.grey.shade200),
                 const SizedBox(height: 12),
-
-                // Phone number with icon
                 Row(
                   children: [
-                    Icon(
-                      Icons.phone_outlined,
-                      size: 18,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.phone_outlined, size: 18, color: Colors.grey.shade600),
                     const SizedBox(width: 8),
-                    Text(
-                      address.phone,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text(address.phone),
                   ],
                 ),
-
-                const SizedBox(height: 10),
-
-                // Address with icon
+                const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 18,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.location_on_outlined, size: 18, color: Colors.grey.shade600),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            address.addressLine,
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${address.ward}, ${address.district}, ${address.city}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '${address.addressLine}\n'
+                        '${address.ward}, ${address.district}, ${address.city}',
                       ),
                     ),
                   ],
@@ -286,12 +232,6 @@ class _AddressScreenState extends State<AddressScreen> {
       appBar: AppBar(
         title: const Text("Address"),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: FutureBuilder<List<UserAddress>>(
         future: _addressesFuture,
@@ -305,7 +245,6 @@ class _AddressScreenState extends State<AddressScreen> {
               child: Text(
                 snapshot.error.toString(),
                 style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
               ),
             );
           }
@@ -314,7 +253,6 @@ class _AddressScreenState extends State<AddressScreen> {
 
           return Column(
             children: [
-              // Add new address button
               GestureDetector(
                 onTap: _onAddAddress,
                 child: Container(
@@ -326,23 +264,14 @@ class _AddressScreenState extends State<AddressScreen> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.location_on_outlined, color: Colors.grey.shade700),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Add new address',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
+                    children: const [
+                      Icon(Icons.location_on_outlined),
+                      SizedBox(width: 8),
+                      Text("Add new address"),
                     ],
                   ),
                 ),
               ),
-
-              // Address list
               Expanded(
                 child: addresses.isEmpty
                     ? const Center(child: Text("Chưa có địa chỉ nào"))

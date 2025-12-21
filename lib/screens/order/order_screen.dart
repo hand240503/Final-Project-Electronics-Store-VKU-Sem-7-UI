@@ -716,45 +716,52 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          const SizedBox(width: 8),
-
           // Nút hành động theo status
           if (status == 0)
+            // Status 0 - Chờ xác nhận: Nút Hủy đơn
             SizedBox(
               width: 100,
               child: OutlinedButton(
                 onPressed: () async {
-                  // Hiển thị dialog xác nhận trước khi hủy
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Xác nhận hủy đơn'),
-                      content: const Text('Bạn có chắc chắn muốn hủy đơn hàng này?'),
+                      title: Text(
+                        'Xác nhận hủy đơn',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      content: Text(
+                        'Bạn có chắc chắn muốn hủy đơn hàng này?',
+                        style: GoogleFonts.roboto(),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Không'),
+                          child: Text('Không', style: GoogleFonts.roboto()),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text(
+                          child: Text(
                             'Hủy đơn',
-                            style: TextStyle(color: Color(0xFFE85D4D)),
+                            style: GoogleFonts.roboto(
+                              color: const Color(0xFFE85D4D),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   );
 
-                  // Nếu người dùng xác nhận
                   if (confirm == true) {
                     final result = await OrderService.cancelOrder(orderId);
                     if (result['success'] == true) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã hủy đơn hàng')),
+                          SnackBar(
+                            content: Text('Đã hủy đơn hàng', style: GoogleFonts.roboto()),
+                          ),
                         );
-                        // Reset data và reload
                         setState(() {
                           _ordersByStatus[0] = [];
                           _ordersByStatus[5] = [];
@@ -765,7 +772,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                     } else {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result['message'] ?? 'Hủy đơn thất bại')),
+                          SnackBar(
+                            content: Text(
+                              result['message'] ?? 'Hủy đơn thất bại',
+                              style: GoogleFonts.roboto(),
+                            ),
+                          ),
                         );
                       }
                     }
@@ -774,65 +786,320 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFE85D4D),
                   side: const BorderSide(color: Color(0xFFE85D4D)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                child: const Text(
-                  'Hủy đơn',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            )
-          else if (status == 3)
-            SizedBox(
-              width: 100,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE85D4D),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Đánh giá',
-                  style: GoogleFonts.roboto(fontSize: 14),
-                ),
+                child: Text('Hủy đơn', style: GoogleFonts.roboto(fontSize: 14)),
               ),
             )
           else if (status == 2)
+            // Status 2 - Chờ giao hàng: Nút Đã nhận hàng
             SizedBox(
-              width: 110,
+              width: 120,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(
+                        'Xác nhận đã nhận hàng',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      content: Text(
+                        'Bạn đã nhận được hàng và hài lòng với sản phẩm?',
+                        style: GoogleFonts.roboto(),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('Chưa', style: GoogleFonts.roboto()),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(
+                            'Đã nhận',
+                            style: GoogleFonts.roboto(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    // TODO: Call API to confirm received
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Đã xác nhận nhận hàng', style: GoogleFonts.roboto()),
+                        ),
+                      );
+                      setState(() {
+                        _ordersByStatus[2] = [];
+                        _ordersByStatus[3] = [];
+                      });
+                      await _fetchAllOrderCounts();
+                      await _fetchOrdersByStatus(status);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
+                ),
+                child: Text('Đã nhận hàng', style: GoogleFonts.roboto(fontSize: 14)),
+              ),
+            )
+          else if (status == 3) ...[
+            // Status 3 - Đã giao: Nút Trả hàng + Đánh giá
+            SizedBox(
+              width: 100,
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(
+                        'Xác nhận trả hàng',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      content: Text(
+                        'Bạn có chắc chắn muốn trả hàng đơn hàng này?\n\nLưu ý: Chỉ được trả hàng trong vòng 7 ngày kể từ khi nhận hàng.',
+                        style: GoogleFonts.roboto(),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('Hủy', style: GoogleFonts.roboto()),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(
+                            'Trả hàng',
+                            style: GoogleFonts.roboto(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const CircularProgressIndicator(),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final result = await OrderService.returnOrder(orderId);
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+
+                    if (context.mounted) {
+                      if (result['success'] == true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result['message'] ?? 'Đã gửi yêu cầu trả hàng thành công',
+                              style: GoogleFonts.roboto(),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        setState(() {
+                          _ordersByStatus[3] = [];
+                          _ordersByStatus[4] = [];
+                        });
+                        await _fetchAllOrderCounts();
+                        await _fetchOrdersByStatus(3);
+                        await _fetchOrdersByStatus(4);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result['message'] ?? 'Không thể trả hàng',
+                              style: GoogleFonts.roboto(),
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                  side: const BorderSide(color: Colors.blue),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+                  foregroundColor: Colors.orange,
+                  side: const BorderSide(color: Colors.orange),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                child: const Text(
-                  'Xem vị trí',
-                  style: TextStyle(fontSize: 14),
-                ),
+                child: Text('Trả hàng', style: GoogleFonts.roboto(fontSize: 14)),
               ),
             ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 100,
+              child: ElevatedButton(
+                onPressed: () {
+                  // TODO: Navigate to review screen
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE85D4D),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
+                ),
+                child: Text('Đánh giá', style: GoogleFonts.roboto(fontSize: 14)),
+              ),
+            ),
+          ] else if (status == 4) ...[
+            // Status 4 - Đang trong quá trình trả hàng: Nút Hủy yêu cầu
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange.shade700, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Đang xem xét trả hàng',
+                    style: GoogleFonts.roboto(
+                      fontSize: 13,
+                      color: Colors.orange.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 120,
+              child: OutlinedButton(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(
+                        'Hủy yêu cầu trả hàng',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      content: Text(
+                        'Bạn có chắc chắn muốn hủy yêu cầu trả hàng này?\n\nĐơn hàng sẽ quay về trạng thái "Đã giao".',
+                        style: GoogleFonts.roboto(),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('Không', style: GoogleFonts.roboto()),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(
+                            'Hủy yêu cầu',
+                            style: GoogleFonts.roboto(
+                              color: const Color(0xFFE85D4D),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const CircularProgressIndicator(),
+                          ),
+                        ),
+                      );
+                    }
+
+                    // TODO: Gọi API hủy yêu cầu trả hàng
+                    final result = await OrderService.cancelReturnRequest(orderId);
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+
+                    if (context.mounted) {
+                      if (result['success'] == true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Đã hủy yêu cầu trả hàng',
+                              style: GoogleFonts.roboto(),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        setState(() {
+                          _ordersByStatus[3] = [];
+                          _ordersByStatus[4] = [];
+                        });
+                        await _fetchAllOrderCounts();
+                        await _fetchOrdersByStatus(3);
+                        await _fetchOrdersByStatus(4);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result['message'] ?? 'Không thể hủy yêu cầu',
+                              style: GoogleFonts.roboto(),
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFE85D4D),
+                  side: const BorderSide(color: Color(0xFFE85D4D)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                child: Text('Hủy yêu cầu', style: GoogleFonts.roboto(fontSize: 14)),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shop/routes/route_constants.dart';
 import 'package:shop/services/orders/order_service.dart';
-import 'package:shop/services/orders/order_success_screen.dart';
+import 'package:shop/screens/order/order_success_screen.dart';
 
 final storage = FlutterSecureStorage();
 

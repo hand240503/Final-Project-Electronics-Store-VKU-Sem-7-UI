@@ -63,6 +63,14 @@ class ApiEndpoints {
     return "$baseUrl/api/orders/cancel/$orderId/";
   }
 
+  static String returnOrder(int orderId) {
+    return "$baseUrl/api/orders/return/$orderId/";
+  }
+
+  static String cancelReturnRequest(int orderId) {
+    return "$baseUrl/api/orders/cancel-return/$orderId/";
+  }
+
   // ================= CART =================
   /// Thêm sản phẩm vào giỏ hàng
   static const String addToCart = "/api/cart/add/";
@@ -82,5 +90,38 @@ class ApiEndpoints {
     return "/api/cart/$cartItemId/delete/";
   }
 
-  
+  // ================= NOTIFICATION =================
+  /// Lấy danh sách tất cả notifications
+  static const String notifications = "/api/notifications/";
+
+  /// Chi tiết một notification
+  static String notificationDetail(int id) {
+    return "/api/notifications/$id/";
+  }
+
+  /// Lấy danh sách notifications chưa đọc
+  static const String notificationsUnread = "/api/notifications/unread/";
+
+  /// Lấy số lượng notifications chưa đọc
+  static const String notificationsUnreadCount = "/api/notifications/unread-count/";
+
+  /// Đánh dấu một notification đã đọc
+  static String notificationMarkRead(int id) {
+    return "/api/notifications/$id/mark-read/";
+  }
+
+  /// Đánh dấu tất cả notifications đã đọc
+  static const String notificationsMarkAllRead = "/api/notifications/mark-all-read/";
+
+  /// Xóa tất cả notifications đã đọc
+  static const String notificationsDeleteRead = "/api/notifications/delete-read/";
+
+  /// Xóa một notification
+  static String deleteNotification(int id) {
+    return "/api/notifications/$id/";
+  }
+
+  /// Profile
+  static const String profileDetail = '/api/accounts/profile/';
+  static const String profileUpdate = '/api/accounts/profile/update/';
 }

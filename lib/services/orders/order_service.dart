@@ -117,4 +117,48 @@ class OrderService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  static Future<Map<String, dynamic>> returnOrder(int orderId) async {
+    try {
+      String? token = await storage.read(key: 'access');
+      if (token == null) {
+        return {'success': false, 'message': 'User not logged in'};
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.returnOrder(orderId)),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi: $e'};
+    }
+  }
+
+  // Hủy yêu cầu trả hàng (status = 4 -> 3)
+  static Future<Map<String, dynamic>> cancelReturnRequest(int orderId) async {
+    try {
+      String? token = await storage.read(key: 'access');
+      if (token == null) {
+        return {'success': false, 'message': 'User not logged in'};
+      }
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.cancelReturnRequest(orderId)),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi: $e'};
+    }
+  }
 }

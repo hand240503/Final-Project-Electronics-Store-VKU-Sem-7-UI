@@ -25,21 +25,33 @@ class AuthService {
       final data = jsonDecode(response.body);
       final user = data['user'];
 
-      // TOKEN
+      /// ================= TOKEN =================
       await storage.write(key: 'access', value: data['access']);
       await storage.write(key: 'refresh', value: data['refresh']);
 
-      // USER INFO
+      /// ================= USER BASIC INFO =================
       await storage.write(key: 'user_id', value: user['id'].toString());
       await storage.write(key: 'username', value: user['username']);
       await storage.write(key: 'email', value: user['email']);
       await storage.write(key: 'first_name', value: user['first_name']);
-      await storage.write(key: 'is_active', value: user['is_active'].toString());
+      await storage.write(
+        key: 'is_active',
+        value: user['is_active'].toString(),
+      );
 
-      // USER ADDRESSES
-      // Chuyển list addresses thành JSON string để lưu
-      final addressesJson = jsonEncode(user['addresses']);
+      /// ================= USER ADDRESSES =================
+      final addressesJson = jsonEncode(user['addresses'] ?? []);
       await storage.write(key: 'addresses', value: addressesJson);
+
+      /// ================= USER PROFILE =================
+      print(user['profile']);
+      final profile = user['profile'];
+      if (profile != null) {
+        await storage.write(
+          key: 'profile',
+          value: jsonEncode(profile),
+        );
+      }
 
       return true;
     } else {

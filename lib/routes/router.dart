@@ -7,6 +7,7 @@ import 'package:shop/models/order_model.dart';
 // Routes
 import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/cart/cart_screen.dart';
+import 'package:shop/screens/notification/notification_screen.dart';
 
 // Onboarding
 import 'package:shop/screens/onbording/onbording_screnn.dart';
@@ -27,6 +28,7 @@ import 'package:shop/screens/product/product_details_screen.dart';
 
 // Checkout / Cart - Import OrderItem từ product_order_screen
 import 'package:shop/screens/product/product_order_screen.dart';
+import 'package:shop/screens/profile/edit_profile_screen.dart';
 
 // Wallet
 import 'package:shop/screens/wallet/wallet_screen.dart';
@@ -177,7 +179,17 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         settings: settings,
         builder: (context) => const CartScreen(),
       );
+    case notificationsScreenRoute:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const NotificationScreen(),
+      );
 
+    case editProfileScreenRoute:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const EditProfileScreen(),
+      );
     // Default
     default:
       return MaterialPageRoute(

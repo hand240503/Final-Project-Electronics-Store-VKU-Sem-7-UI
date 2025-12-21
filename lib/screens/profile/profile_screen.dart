@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:shop/components/list_tile/divider_list_tile.dart';
 import 'package:shop/components/network_image_with_loader.dart';
@@ -50,30 +51,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Hàm build avatar với chữ cái đầu
+  Widget _buildAvatar({required String name, double size = 60}) {
+    // Lấy chữ cái đầu tiên của tên
+    String initials = '';
+    if (name.isNotEmpty) {
+      final nameParts = name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        // Nếu có họ và tên, lấy chữ cái đầu của cả hai
+        initials = nameParts[0][0].toUpperCase() + nameParts[nameParts.length - 1][0].toUpperCase();
+      } else {
+        // Nếu chỉ có một từ, lấy chữ cái đầu
+        initials = nameParts[0][0].toUpperCase();
+      }
+    } else {
+      initials = 'U'; // Default
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.deepPurple, // Nền màu tím
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+            fontSize: size * 0.4, // Font size tương ứng với size của avatar
+            fontWeight: FontWeight.w600,
+            color: Colors.orange, // Chữ màu cam
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
         children: [
-          /// ===== PROFILE CARD =====
-          ProfileCard(
-            name: name,
-            email: email,
-            imageSrc: avatar,
-            press: () {
-              // Navigator.pushNamed(context, userInfoScreenRoute);
-            },
+          /// ===== PROFILE CARD với Custom Avatar =====
+          Padding(
+            padding: const EdgeInsets.all(defaultPadding),
+            child: Row(
+              children: [
+                // Avatar với chữ cái đầu
+                _buildAvatar(name: name, size: 60),
+
+                const SizedBox(width: defaultPadding),
+
+                // Thông tin user
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: GoogleFonts.roboto(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Icon edit
+                IconButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, editProfileScreenRoute);
+                  },
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
           ),
+
+          Divider(height: 1, color: Colors.grey.shade200),
 
           /// ===== ACCOUNT =====
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+            padding: const EdgeInsets.symmetric(
+              horizontal: defaultPadding,
+              vertical: defaultPadding,
+            ),
             child: Text(
               "Account",
-              style: Theme.of(context).textTheme.titleSmall,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
             ),
           ),
-          const SizedBox(height: defaultPadding / 2),
 
           ProfileMenuListTile(
             text: "Orders",
@@ -83,24 +168,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           ProfileMenuListTile(
-            text: "Returns",
-            svgSrc: "assets/icons/Return.svg",
-            press: () {},
-          ),
-
-          ProfileMenuListTile(
             text: "Addresses",
             svgSrc: "assets/icons/Address.svg",
             press: () {
               Navigator.pushNamed(context, userAddressScreenRoute);
             },
           ),
-          ProfileMenuListTile(
-            text: "Payment",
-            svgSrc: "assets/icons/card.svg",
-            press: () {},
-          ),
-
           const SizedBox(height: defaultPadding),
 
           /// ===== LOGOUT =====
@@ -116,12 +189,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 BlendMode.srcIn,
               ),
             ),
-            title: const Text(
+            title: Text(
               "Log Out",
-              style: TextStyle(
+              style: GoogleFonts.roboto(
                 color: errorColor,
                 fontSize: 14,
-                height: 1,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

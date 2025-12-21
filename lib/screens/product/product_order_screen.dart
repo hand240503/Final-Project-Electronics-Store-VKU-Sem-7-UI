@@ -30,11 +30,49 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   dynamic selectedAddress;
   bool isLoading = true;
   bool hasInsurance = false;
+  String paymentMethod = 'Tiền mặt khi nhận hàng';
+
+  // Voucher variables
+  String? selectedVoucherCode;
+  String? selectedVoucherTitle;
+  int selectedVoucherDiscount = 0;
+  TextEditingController voucherController = TextEditingController();
+
+  // Danh sách voucher có sẵn (có thể load từ API)
+  final List<Map<String, dynamic>> availableVouchers = [
+    {
+      'code': 'FREESHIP50K',
+      'title': 'Miễn phí vận chuyển',
+      'description': 'Giảm 50.000đ phí vận chuyển',
+      'discount': 50000,
+      'minOrder': 0,
+    },
+    {
+      'code': 'GIAM100K',
+      'title': 'Giảm 100K',
+      'description': 'Giảm 100.000đ cho đơn từ 500K',
+      'discount': 100000,
+      'minOrder': 500000,
+    },
+    {
+      'code': 'GIAM50K',
+      'title': 'Giảm 50K',
+      'description': 'Giảm 50.000đ cho đơn từ 200K',
+      'discount': 50000,
+      'minOrder': 200000,
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
     loadUserData();
+  }
+
+  @override
+  void dispose() {
+    voucherController.dispose();
+    super.dispose();
   }
 
   Future<void> loadUserData() async {
@@ -83,6 +121,71 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
+  // Áp dụng voucher từ ô nhập
+  void _applyVoucherCode() {
+    final code = voucherController.text.trim().toUpperCase();
+
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng nhập mã voucher")),
+      );
+      return;
+    }
+
+    // Tìm voucher trong danh sách
+    final voucher = availableVouchers.firstWhere(
+      (v) => v['code'] == code,
+      orElse: () => {},
+    );
+
+    if (voucher.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Mã voucher không hợp lệ"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Kiểm tra điều kiện tối thiểu
+    if (subtotal < voucher['minOrder']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              "Đơn hàng tối thiểu ${NumberFormat('#,###', 'vi_VN').format(voucher['minOrder'])}đ"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Áp dụng voucher
+    setState(() {
+      selectedVoucherCode = voucher['code'];
+      selectedVoucherTitle = voucher['title'];
+      selectedVoucherDiscount = voucher['discount'];
+      voucherController.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Áp dụng voucher thành công"),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  // Xóa voucher đã chọn
+  void _removeVoucher() {
+    setState(() {
+      selectedVoucherCode = null;
+      selectedVoucherTitle = null;
+      selectedVoucherDiscount = 0;
+      voucherController.clear();
+    });
+  }
+
   void placeOrder() async {
     if (selectedAddress == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,13 +209,18 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       final quantity = item['quantity'] as int;
       return sum + (price * quantity).toInt();
     });
+
+    // Trừ voucher discount
+    final finalTotal = calculatedTotal - selectedVoucherDiscount;
+
     final oderCode = "#${DateTime.now().millisecondsSinceEpoch}";
     final Map<String, dynamic> orderPayload = {
-      "totalPrice": calculatedTotal,
+      "totalPrice": finalTotal,
       "hasInsurance": hasInsurance,
       "note": "",
-      "discountCode": "",
+      "discountCode": selectedVoucherCode ?? "",
       "orderCode": oderCode,
+      "paymentMethod": paymentMethod,
       "address": {
         "full_name": selectedAddress['full_name'],
         "phone": selectedAddress['phone'],
@@ -134,7 +242,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         MaterialPageRoute(
           builder: (context) => OrderSuccessScreen(
             orderId: oderCode,
-            totalAmount: calculatedTotal,
+            totalAmount: finalTotal,
             orderDate: DateTime.now(),
           ),
         ),
@@ -150,7 +258,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   Widget build(BuildContext context) {
     final insurancePrice = 31499;
     final shippingDiscount = 37700;
-    final total = subtotal + (hasInsurance ? insurancePrice : 0);
+    final total = subtotal + (hasInsurance ? insurancePrice : 0) - selectedVoucherDiscount;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -184,7 +292,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                         const SizedBox(height: 8),
                         _buildVoucherSection(),
                         const SizedBox(height: 8),
-                        _buildNoteSection(),
+                        _buildPaymentMethodSection(),
                         const SizedBox(height: 8),
                         _buildShippingSection(shippingDiscount),
                         const SizedBox(height: 100),
@@ -367,71 +475,256 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   Widget _buildVoucherSection() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: InkWell(
-        onTap: () {},
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Voucher của Shop',
-              style: GoogleFonts.roboto(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Voucher của Shop',
+                style: GoogleFonts.roboto(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            Row(
-              children: [
-                Text(
-                  'Chọn hoặc nhập mã',
+              InkWell(
+                onTap: _showVoucherBottomSheet,
+                child: Row(
+                  children: [
+                    Text(
+                      'Chọn voucher',
+                      style: GoogleFonts.roboto(
+                        color: Colors.blue,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Ô nhập mã voucher
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: voucherController,
+                  decoration: InputDecoration(
+                    hintText: 'Nhập mã voucher',
+                    hintStyle: GoogleFonts.roboto(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: primaryMaterialColor, width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    prefixIcon: const Icon(Icons.local_offer_outlined, color: primaryMaterialColor),
+                  ),
+                  style: GoogleFonts.roboto(fontSize: 14),
+                  textCapitalization: TextCapitalization.characters,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _applyVoucherCode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryMaterialColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                  minimumSize: const Size(80, 48),
+                  maximumSize: const Size(double.infinity, 48),
+                ),
+                child: Text(
+                  'Áp dụng',
                   style: GoogleFonts.roboto(
-                    color: Colors.grey.shade500,
+                    color: Colors.white,
                     fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right, color: Colors.grey.shade400),
-              ],
+              ),
+            ],
+          ),
+
+          // Hiển thị voucher đã chọn (nếu có)
+          if (selectedVoucherCode != null) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          selectedVoucherTitle ?? '',
+                          style: GoogleFonts.roboto(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Mã: $selectedVoucherCode',
+                          style: GoogleFonts.roboto(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        if (selectedVoucherDiscount > 0)
+                          Text(
+                            'Giảm ${NumberFormat('#,###', 'vi_VN').format(selectedVoucherDiscount)}đ',
+                            style: GoogleFonts.roboto(
+                              fontSize: 13,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                    onPressed: _removeVoucher,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildNoteSection() {
+  Widget _buildPaymentMethodSection() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: InkWell(
-        onTap: () {},
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Lời nhắn cho Shop',
-              style: GoogleFonts.roboto(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-            Row(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header - Có thể click để thay đổi
+          InkWell(
+            onTap: _showPaymentMethodBottomSheet,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Để lại lời nhắn',
+                  'Phương thức thanh toán',
                   style: GoogleFonts.roboto(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                Row(
+                  children: [
+                    Text(
+                      'Thay đổi',
+                      style: GoogleFonts.roboto(
+                        color: Colors.blue,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Hiển thị phương thức đã chọn bên dưới
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: primaryMaterialColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: primaryMaterialColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  paymentMethod == 'Tiền mặt khi nhận hàng' ? Icons.money : Icons.credit_card,
+                  color: primaryMaterialColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paymentMethod,
+                        style: GoogleFonts.roboto(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        paymentMethod == 'Tiền mặt khi nhận hàng'
+                            ? 'Thanh toán khi nhận hàng (COD)'
+                            : 'Ví điện tử, thẻ ATM, thẻ tín dụng',
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.check_circle,
+                  color: primaryMaterialColor,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -441,9 +734,11 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       color: Colors.white,
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           InkWell(
-            onTap: () {},
+            onTap: _showShippingMethodBottomSheet,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -458,20 +753,23 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 Row(
                   children: [
                     Text(
-                      'Xem tất cả',
+                      'Xem chi tiết',
                       style: GoogleFonts.roboto(
                         color: Colors.blue,
                         fontSize: 14,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                    Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
                   ],
                 ),
               ],
             ),
           ),
+
           const SizedBox(height: 12),
+
+          // Phương thức vận chuyển đã chọn
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -552,6 +850,513 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
+  void _showShippingMethodBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Phương thức vận chuyển',
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Vận chuyển nhanh - Miễn phí (Mặc định)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: primaryMaterialColor,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: primaryMaterialColor.withOpacity(0.05),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.local_shipping,
+                            color: Colors.green,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Nhanh',
+                                      style: GoogleFonts.roboto(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Vận chuyển nhanh',
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Text(
+                                    '37.700đ',
+                                    style: GoogleFonts.roboto(
+                                      decoration: TextDecoration.lineThrough,
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Miễn Phí',
+                                    style: GoogleFonts.roboto(
+                                      color: Colors.green,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.check_circle,
+                          color: primaryMaterialColor,
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 16, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Dự kiến giao: 22 Th12 - 25 Th12',
+                          style: GoogleFonts.roboto(
+                            fontSize: 13,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.card_giftcard, size: 16, color: Colors.orange.shade700),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Nhận Voucher 15.000đ nếu giao trễ sau 25/12/2025',
+                              style: GoogleFonts.roboto(
+                                fontSize: 12,
+                                color: Colors.orange.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: Colors.blue.shade700),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Đây là phương thức vận chuyển mặc định và duy nhất',
+                              style: GoogleFonts.roboto(
+                                fontSize: 11,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Nút xác nhận
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryMaterialColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Xác nhận',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPaymentMethodBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chọn phương thức thanh toán',
+                style: GoogleFonts.roboto(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Tiền mặt khi nhận hàng
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    paymentMethod = 'Tiền mặt khi nhận hàng';
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: paymentMethod == 'Tiền mặt khi nhận hàng'
+                          ? primaryMaterialColor
+                          : Colors.grey.shade300,
+                      width: paymentMethod == 'Tiền mặt khi nhận hàng' ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: paymentMethod == 'Tiền mặt khi nhận hàng'
+                        ? primaryMaterialColor.withOpacity(0.05)
+                        : Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.money,
+                        color: paymentMethod == 'Tiền mặt khi nhận hàng'
+                            ? primaryMaterialColor
+                            : Colors.grey.shade600,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tiền mặt khi nhận hàng',
+                              style: GoogleFonts.roboto(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Thanh toán khi nhận hàng (COD)',
+                              style: GoogleFonts.roboto(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (paymentMethod == 'Tiền mặt khi nhận hàng')
+                        const Icon(
+                          Icons.check_circle,
+                          color: primaryMaterialColor,
+                          size: 24,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVoucherBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Chọn Voucher',
+                        style: GoogleFonts.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Danh sách voucher
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: availableVouchers.length,
+                      itemBuilder: (context, index) {
+                        final voucher = availableVouchers[index];
+                        final isSelected = selectedVoucherCode == voucher['code'];
+                        final canUse = subtotal >= voucher['minOrder'];
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: InkWell(
+                            onTap: canUse
+                                ? () {
+                                    setState(() {
+                                      selectedVoucherCode = voucher['code'];
+                                      selectedVoucherTitle = voucher['title'];
+                                      selectedVoucherDiscount = voucher['discount'];
+                                      voucherController.clear();
+                                    });
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Áp dụng voucher thành công"),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: isSelected
+                                      ? primaryMaterialColor
+                                      : canUse
+                                          ? Colors.grey.shade300
+                                          : Colors.grey.shade200,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                color: isSelected
+                                    ? primaryMaterialColor.withOpacity(0.05)
+                                    : canUse
+                                        ? Colors.white
+                                        : Colors.grey.shade100,
+                              ),
+                              child: Row(
+                                children: [
+                                  // Icon voucher
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: canUse
+                                          ? primaryMaterialColor.withOpacity(0.1)
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.local_offer,
+                                      color: canUse ? primaryMaterialColor : Colors.grey,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Thông tin voucher
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          voucher['title'],
+                                          style: GoogleFonts.roboto(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: canUse ? Colors.black : Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          voucher['description'],
+                                          style: GoogleFonts.roboto(
+                                            fontSize: 13,
+                                            color: canUse ? Colors.grey.shade600 : Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Mã: ${voucher['code']}',
+                                          style: GoogleFonts.roboto(
+                                            fontSize: 12,
+                                            color: canUse ? primaryMaterialColor : Colors.grey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        if (!canUse)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Text(
+                                              'Đơn tối thiểu ${NumberFormat('#,###', 'vi_VN').format(voucher['minOrder'])}đ',
+                                              style: GoogleFonts.roboto(
+                                                fontSize: 11,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Radio button
+                                  Radio<String>(
+                                    value: voucher['code'],
+                                    groupValue: selectedVoucherCode,
+                                    onChanged: canUse
+                                        ? (value) {
+                                            setState(() {
+                                              selectedVoucherCode = voucher['code'];
+                                              selectedVoucherTitle = voucher['title'];
+                                              selectedVoucherDiscount = voucher['discount'];
+                                              voucherController.clear();
+                                            });
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Áp dụng voucher thành công"),
+                                                backgroundColor: Colors.green,
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    activeColor: primaryMaterialColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildBottomBar(int subtotal, int total, int discount) {
     final formattedTotal = NumberFormat('#,###', 'vi_VN').format(total);
     return Container(
@@ -581,6 +1386,15 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       color: Colors.grey.shade600,
                     ),
                   ),
+                  // Hiển thị voucher giảm giá
+                  if (selectedVoucherDiscount > 0)
+                    Text(
+                      'Voucher: -${NumberFormat('#,###', 'vi_VN').format(selectedVoucherDiscount)}đ',
+                      style: GoogleFonts.roboto(
+                        fontSize: 11,
+                        color: Colors.green,
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Row(
                     children: [

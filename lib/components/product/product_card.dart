@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shop/services/behavior/behavior_tracking_service.dart';
 import '../../constants.dart';
 import '../network_image_with_loader.dart';
 
@@ -13,12 +14,15 @@ class ProductCard extends StatelessWidget {
     this.priceAfterDiscount,
     this.discountPercent,
     required this.press,
+    this.productId,
   });
+
   final String image, brandName, title;
   final double price;
   final double? priceAfterDiscount;
   final int? discountPercent;
   final VoidCallback press;
+  final int? productId; // ✅ NEW: Product ID for tracking
 
   String formatVND(double value) {
     final formatter = NumberFormat.currency(
@@ -29,10 +33,26 @@ class ProductCard extends StatelessWidget {
     return formatter.format(value);
   }
 
+  /// ✅ NEW: Handle tap with behavior tracking
+  void _handlePress() async {
+    // Track behavior nếu có productId
+    if (productId != null) {
+      try {
+        await BehaviorTrackingService.trackViewDetails(productId!);
+      } catch (e) {
+        // Nếu tracking fail, vẫn navigate bình thường
+        print('⚠️  Tracking failed: $e');
+      }
+    }
+
+    // Execute original press callback
+    press();
+  }
+
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: press,
+      onPressed: _handlePress, // ✅ CHANGED: Use _handlePress instead of press
       style: OutlinedButton.styleFrom(
           minimumSize: const Size(140, 220),
           maximumSize: const Size(140, 220),
@@ -107,7 +127,7 @@ class ProductCard extends StatelessWidget {
                           ],
                         )
                       : Text(
-                          "\$$price",
+                          formatVND(price),
                           style: const TextStyle(
                             color: Color(0xFF31B0D8),
                             fontWeight: FontWeight.w500,

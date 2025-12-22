@@ -119,6 +119,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ],
             ),
             ProductInfo(
+              productId: productId,
               brand: productDetail?.brand.name ?? '',
               title: productDetail?.name ?? '',
               isAvailable: productDetail?.isAvailable ?? false,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shop/services/behavior/behavior_tracking_service.dart';
 import '../../../constants.dart';
 import 'product_availability_tag.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ class ProductInfo extends StatefulWidget {
     required this.isAvailable,
     required this.price,
     required this.discountPrice,
+    required this.productId, // ✅ NEW: Add productId for tracking
   });
 
   final String title, brand, description;
@@ -23,6 +25,7 @@ class ProductInfo extends StatefulWidget {
   final bool isAvailable;
   final double price;
   final double discountPrice;
+  final int? productId; // ✅ NEW: Product ID
 
   @override
   State<ProductInfo> createState() => _ProductInfoState();
@@ -30,6 +33,7 @@ class ProductInfo extends StatefulWidget {
 
 class _ProductInfoState extends State<ProductInfo> {
   bool _isExpanded = false;
+  bool _hasTrackedMoreDetails = false; // ✅ NEW: Track only once
 
   String formatVND(double value) {
     final formatter = NumberFormat.currency(
@@ -38,6 +42,24 @@ class _ProductInfoState extends State<ProductInfo> {
       decimalDigits: 0,
     );
     return formatter.format(value);
+  }
+
+  /// ✅ NEW: Handle expand với tracking
+  void _handleExpand() async {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+
+    // Track moreDetails khi user bấm "Xem thêm" (chỉ track 1 lần)
+    if (!_isExpanded && !_hasTrackedMoreDetails && widget.productId != null) {
+      try {
+        await BehaviorTrackingService.trackViewMoreDetails(widget.productId!);
+        _hasTrackedMoreDetails = true;
+        print('✅ Tracked moreDetails for product ${widget.productId}');
+      } catch (e) {
+        print('⚠️  Tracking moreDetails failed: $e');
+      }
+    }
   }
 
   @override
@@ -125,14 +147,10 @@ class _ProductInfoState extends State<ProductInfo> {
               duration: const Duration(milliseconds: 250),
             ),
 
-            // 👇 Nút "Xem thêm / Thu gọn"
+            // 👇 Nút "Xem thêm / Thu gọn" với tracking
             if (shouldShowButton)
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
+                onPressed: _handleExpand, // ✅ CHANGED: Use _handleExpand
                 child: Text(
                   _isExpanded ? "Thu gọn" : "Xem thêm",
                   style: const TextStyle(fontWeight: FontWeight.w600),

@@ -124,4 +124,25 @@ class ApiEndpoints {
   /// Profile
   static const String profileDetail = '/api/accounts/profile/';
   static const String profileUpdate = '/api/accounts/profile/update/';
+
+  // ================= USER BEHAVIOR TRACKING =================
+  /// Track user behavior (details, moreDetails, addToCart, buy)
+  static const String trackBehavior = "/api/rating/track-behavior/";
+
+  /// Lấy lịch sử tương tác của user
+  static const String userInteractions = "/api/rating/user-interactions/";
+
+  /// Lấy thống kê tương tác của sản phẩm
+  static String productInteractions(int productId, {String? event}) {
+    String url = "/api/rating/product-interactions/$productId/";
+    if (event != null && event.isNotEmpty) {
+      url += "?event=$event";
+    }
+    return url;
+  }
+
+  /// Lấy danh sách sản phẩm trending
+  static String trendingProducts({int days = 7, int limit = 10}) {
+    return "/api/rating/trending-products/?days=$days&limit=$limit";
+  }
 }

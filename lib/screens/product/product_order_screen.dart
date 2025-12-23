@@ -7,6 +7,7 @@ import 'package:shop/models/product_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shop/routes/route_constants.dart';
+import 'package:shop/services/behavior/behavior_tracking_service.dart';
 import 'package:shop/services/orders/order_service.dart';
 import 'package:shop/screens/order/order_success_screen.dart';
 
@@ -210,10 +211,9 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       return sum + (price * quantity).toInt();
     });
 
-    // Trừ voucher discount
     final finalTotal = calculatedTotal - selectedVoucherDiscount;
-
     final oderCode = "#${DateTime.now().millisecondsSinceEpoch}";
+
     final Map<String, dynamic> orderPayload = {
       "totalPrice": finalTotal,
       "hasInsurance": hasInsurance,
@@ -237,6 +237,9 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     final result = await OrderService.createOrder(orderPayload);
 
     if (result['success']) {
+      // ✅ THÊM TRACKING Ở ĐÂY - Track hành động "buy" cho từng sản phẩm
+      await _trackPurchase(items, oderCode);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -251,6 +254,27 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Lỗi: ${result['message']}")),
       );
+    }
+  }
+
+// ✅ THÊM METHOD MỚI - Track purchase
+  Future<void> _trackPurchase(List<Map<String, dynamic>> items, String orderId) async {
+    try {
+      // Track từng sản phẩm trong đơn hàng
+      for (var item in items) {
+        await BehaviorTrackingService.trackBuy(
+          productId: item['product_id'] as int,
+          variantId: item['variant_id'] as int?,
+          quantity: item['quantity'] as int,
+          price: (item['price'] as num).toDouble(),
+          orderId: orderId,
+        );
+      }
+
+      debugPrint('✅ Tracked purchase for ${items.length} products');
+    } catch (e) {
+      debugPrint('❌ Error tracking purchase: $e');
+      // Không throw error để không ảnh hưởng đến flow đặt hàng
     }
   }
 

@@ -22,7 +22,7 @@ class ProductCard extends StatelessWidget {
   final double? priceAfterDiscount;
   final int? discountPercent;
   final VoidCallback press;
-  final int? productId; // ✅ NEW: Product ID for tracking
+  final int? productId;
 
   String formatVND(double value) {
     final formatter = NumberFormat.currency(

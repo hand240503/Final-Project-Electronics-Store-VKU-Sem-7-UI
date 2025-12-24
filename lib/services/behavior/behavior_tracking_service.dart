@@ -83,13 +83,6 @@ class BehaviorTrackingService {
         final data = jsonDecode(response.body);
         print(
             '✅ Behavior tracked: ${data['data']['event']} on product ${data['data']['product_name']}');
-
-        // Print implicit rating if created
-        if (data['data']['implicit_rating'] != null) {
-          final rating = data['data']['implicit_rating'];
-          print('   Implicit rating: ${rating['score']}/5 (confidence: ${rating['confidence']})');
-        }
-
         return data;
       } else {
         print('❌ Error tracking behavior: ${response.statusCode}');

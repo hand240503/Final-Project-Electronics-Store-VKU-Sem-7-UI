@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
+import 'package:shop/services/behavior/behavior_tracking_service.dart';
 import '../../constants.dart';
 import '../network_image_with_loader.dart';
 
@@ -14,24 +15,53 @@ class SecondaryProductCard extends StatelessWidget {
     this.discountPercent,
     this.press,
     this.style,
+    this.productId, // ✅ ADDED
   });
+
   final String image, brandName, title;
   final double price;
   final double? priceAfterDiscount;
   final int? discountPercent;
   final VoidCallback? press;
-
   final ButtonStyle? style;
+  final int? productId; // ✅ ADDED
+
+  /// Format giá tiền VND
+  String formatVND(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value);
+  }
+
+  /// ✅ NEW: Handle tap with behavior tracking
+  void _handlePress() async {
+    // Track behavior nếu có productId
+    if (productId != null) {
+      try {
+        await BehaviorTrackingService.trackViewDetails(productId!);
+      } catch (e) {
+        // Nếu tracking fail, vẫn navigate bình thường
+        print('⚠️  Tracking failed: $e');
+      }
+    }
+
+    // Execute original press callback
+    press?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: press,
+      onPressed: press != null ? _handlePress : null, // ✅ CHANGED
       style: style ??
           OutlinedButton.styleFrom(
-              minimumSize: const Size(256, 114),
-              maximumSize: const Size(256, 114),
-              padding: const EdgeInsets.all(8)),
+            minimumSize: const Size(256, 114),
+            maximumSize: const Size(256, 114),
+            padding: const EdgeInsets.all(8),
+          ),
       child: Row(
         children: [
           AspectRatio(
@@ -39,21 +69,28 @@ class SecondaryProductCard extends StatelessWidget {
             child: Stack(
               children: [
                 NetworkImageWithLoader(image, radius: defaultBorderRadious),
-                if (discountPercent != null)
+                if (discountPercent != null && discountPercent! > 0)
                   Positioned(
                     right: defaultPadding / 2,
                     top: defaultPadding / 2,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: defaultPadding / 2,
+                      ),
                       height: 16,
                       decoration: const BoxDecoration(
                         color: errorColor,
-                        borderRadius: BorderRadius.all(Radius.circular(defaultBorderRadious)),
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(defaultBorderRadious),
+                        ),
                       ),
                       child: Text(
                         "$discountPercent% off",
                         style: const TextStyle(
-                            color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500),
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   )
@@ -83,7 +120,7 @@ class SecondaryProductCard extends StatelessWidget {
                       ? Row(
                           children: [
                             Text(
-                              "\$$priceAfterDiscount",
+                              formatVND(priceAfterDiscount!), // ✅ CHANGED
                               style: const TextStyle(
                                 color: Color(0xFF31B0D8),
                                 fontWeight: FontWeight.w500,
@@ -92,7 +129,7 @@ class SecondaryProductCard extends StatelessWidget {
                             ),
                             const SizedBox(width: defaultPadding / 4),
                             Text(
-                              "\$$price",
+                              formatVND(price), // ✅ CHANGED
                               style: TextStyle(
                                 color: Theme.of(context).textTheme.bodyMedium!.color,
                                 fontSize: 10,
@@ -102,7 +139,7 @@ class SecondaryProductCard extends StatelessWidget {
                           ],
                         )
                       : Text(
-                          "\$$price",
+                          formatVND(price), // ✅ CHANGED
                           style: const TextStyle(
                             color: Color(0xFF31B0D8),
                             fontWeight: FontWeight.w500,

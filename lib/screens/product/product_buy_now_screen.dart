@@ -8,6 +8,7 @@ import 'package:shop/models/product_model.dart';
 import 'package:shop/routes/route_constants.dart';
 import 'package:intl/intl.dart';
 import 'package:shop/services/cart/cart_service.dart';
+import 'package:shop/services/behavior/behavior_tracking_service.dart';
 
 import '../../constants.dart';
 import 'components/product_quantity.dart';
@@ -31,13 +32,12 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
   int selectedColorIndex = 0;
 
   late final CartService cartService;
+
   @override
   void initState() {
     super.initState();
     cartService = CartService(storage: const FlutterSecureStorage());
   }
-
-
 
   List<Color> _getVariantColors() {
     final variants = widget.productDetailModel?.variants ?? [];
@@ -63,12 +63,28 @@ class _ProductBuyNowScreenState extends State<ProductBuyNowScreen> {
     final variants = product.variants ?? [];
     final selectedVariantId = variants.isNotEmpty ? variants[selectedColorIndex].id : null;
 
-    // Gọi service
+    // Gọi service thêm vào giỏ hàng
     final result = await cartService.addToCart(
       productId: product.id,
       variantId: selectedVariantId,
       quantity: quantity,
     );
+
+    // ✅ TRACKING: Track behavior "Add to Cart"
+    if (result?['success'] == true) {
+      try {
+        await BehaviorTrackingService.trackAddToCart(
+          productId: product.id,
+          variantId: selectedVariantId,
+          quantity: quantity,
+          price: product.discountPrice,
+        );
+        print('✅ Tracked: Add to cart - Product ${product.id}');
+      } catch (e) {
+        print('⚠️  Tracking failed: $e');
+        // Không ảnh hưởng đến flow chính nếu tracking fail
+      }
+    }
 
     // Kiểm tra mounted trước khi cập nhật UI
     if (!mounted) return;

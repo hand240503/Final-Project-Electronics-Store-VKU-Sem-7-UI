@@ -5,6 +5,7 @@ import 'package:shop/components/skleton/product/products_skelton.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/screens/home/components/offer_carousel_and_categories.dart';
 import 'package:shop/services/products/product_service.dart';
+import 'package:shop/services/recommendation/recommend_service.dart';
 import 'components/popular_products.dart';
 import 'package:shop/models/product_model.dart';
 
@@ -16,19 +17,52 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Products from regular API
   List<ProductModel> popularProducts = [];
   List<ProductModel> saleProducts = [];
   List<ProductModel> bestSaleProducts = [];
+
+  // Products from Recommendation API
+  List<ProductModel> recommendedProducts = [];
+
+  // Loading states
   bool isLoadingPopular = false;
   bool isLoadingSale = false;
   bool isLoadingBestSale = false;
+  bool isLoadingRecommended = false;
 
   @override
   void initState() {
     super.initState();
+    // Fetch regular products
     fetchProductsByType(parentId: 0, type: 'popular');
     fetchProductsByType(parentId: 0, type: 'sale');
     fetchProductsByType(parentId: 0, type: 'best_sale');
+
+    // ✅ Fetch recommended products
+    fetchRecommendedProducts();
+  }
+
+  /// ✅ NEW: Fetch products from Recommendation API
+  Future<void> fetchRecommendedProducts() async {
+    setState(() => isLoadingRecommended = true);
+
+    try {
+      final fetchedProducts = await RecommendationService.getPopularProducts(
+        limit: 10,
+      );
+
+      setState(() {
+        recommendedProducts = fetchedProducts;
+        isLoadingRecommended = false;
+      });
+    } catch (e) {
+      setState(() {
+        recommendedProducts = [];
+        isLoadingRecommended = false;
+      });
+      print('Lỗi khi fetch recommended products: $e');
+    }
   }
 
   Future<void> fetchProductsByType({required int parentId, required String type}) async {
@@ -89,6 +123,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void onCategorySelected(Map<String, dynamic> category) {
     final parentId = category['id'] as int;
+
+    if (parentId == 0) {
+      fetchRecommendedProducts();
+    }
+
     fetchProductsByType(parentId: parentId, type: 'popular');
     fetchProductsByType(parentId: parentId, type: 'sale');
     fetchProductsByType(parentId: parentId, type: 'best_sale');
@@ -100,24 +139,89 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            // Categories Carousel
             SliverToBoxAdapter(
               child: OffersCarouselAndCategories(
                 onCategorySelected: onCategorySelected,
               ),
             ),
-            // Popular products
+
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+                      child: Row(
+                        children: [
+                          Text(
+                            "Recommended For You",
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF6C63FF), Color(0xFF4CAF50)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "AI",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: defaultPadding),
+                    isLoadingRecommended
+                        ? const ProductsSkelton()
+                        : ProductListSection(
+                            title: "",
+                            products: recommendedProducts,
+                          ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Popular products (Regular API)
             SliverPadding(
               padding: const EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
               sliver: SliverToBoxAdapter(
                 child: isLoadingPopular
                     ? const ProductsSkelton()
-                    : ProductListSection(title: "Popular Products", products: popularProducts),
+                    : ProductListSection(
+                        title: "Popular Products",
+                        products: popularProducts,
+                      ),
               ),
             ),
-            // Sale products
 
-            // Best sale products
-
+            // Banner 1
             SliverToBoxAdapter(
               child: Column(
                 children: [
@@ -131,14 +235,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+
+            // Best Sale Products
             SliverPadding(
               padding: const EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
               sliver: SliverToBoxAdapter(
                 child: isLoadingBestSale
                     ? const ProductsSkelton()
-                    : ProductListSection(title: "Best SaleProducts", products: bestSaleProducts),
+                    : ProductListSection(
+                        title: "Best Sale Products",
+                        products: bestSaleProducts,
+                      ),
               ),
             ),
+
+            // Banner 2
             SliverToBoxAdapter(
               child: Column(
                 children: [
@@ -153,12 +264,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+
+            // Sale Products
             SliverPadding(
               padding: const EdgeInsets.symmetric(vertical: defaultPadding * 1.5),
               sliver: SliverToBoxAdapter(
                 child: isLoadingSale
                     ? const ProductsSkelton()
-                    : ProductListSection(title: "Sale Products", products: saleProducts),
+                    : ProductListSection(
+                        title: "Sale Products",
+                        products: saleProducts,
+                      ),
               ),
             ),
           ],

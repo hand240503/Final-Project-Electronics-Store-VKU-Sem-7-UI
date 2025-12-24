@@ -144,27 +144,23 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       itemBuilder: (context, index) {
         final product = _searchResults[index];
         return Padding(
-          padding: const EdgeInsets.only(
-            left: defaultPadding,
-            right: defaultPadding,
-            bottom: defaultPadding,
-          ),
-          child: SecondaryProductCard(
-            image: product.image,
-            brandName: product.brandName,
-            title: product.title,
-            price: product.price,
-            discountPercent: product.discountPercent ?? 0,
-            priceAfterDiscount: product.priceAfterDiscount,
-            press: () {
-              Navigator.pushNamed(
-                context,
-                productDetailsScreenRoute,
-                arguments: product.id,
-              );
-            },
-          ),
-        );
+            padding: const EdgeInsets.only(
+              left: defaultPadding,
+              right: defaultPadding,
+              bottom: defaultPadding,
+            ),
+            child: SecondaryProductCard(
+              image: product.image,
+              brandName: product.brandName,
+              title: product.title,
+              price: product.price,
+              discountPercent: product.discountPercent,
+              priceAfterDiscount: product.priceAfterDiscount,
+              productId: product.id, // ✅ ADDED
+              press: () {
+                Navigator.pushNamed(context, productDetailsScreenRoute, arguments: product.id);
+              },
+            ));
       },
     );
   }

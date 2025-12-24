@@ -9,6 +9,7 @@ import 'package:shop/screens/product/components/product_reviews.dart';
 import 'package:shop/screens/product/custom_modal_bottom_sheet.dart';
 import 'package:shop/screens/product/product_returns_screen.dart';
 import 'package:shop/services/products/product_service.dart';
+import 'package:shop/services/recommendation/recommend_service.dart';
 
 import 'components/notify_me_card.dart';
 import 'components/product_images.dart';
@@ -27,6 +28,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   late int productId;
   ProductDetailModel? productDetail;
   bool isLoading = true;
+
+  // Similar products
+  List<ProductModel> similarProducts = [];
+  bool isLoadingSimilar = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -36,6 +42,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     if (args != null && args is int) {
       productId = args;
       _loadProductDetail(productId);
+      _loadSimilarProducts(productId);
     } else {
       debugPrint("Không nhận được productId hợp lệ từ arguments: $args");
     }
@@ -51,6 +58,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       productDetail = detail;
       isLoading = false;
     });
+  }
+
+  Future<void> _loadSimilarProducts(int id) async {
+    setState(() {
+      isLoadingSimilar = true;
+    });
+
+    try {
+      final response = await RecommendationService.getSimilarProducts(
+        productId: id,
+        limit: 10,
+      );
+
+      // response['results'] đã là List<ProductModel> từ service
+      setState(() {
+        similarProducts = response['results'] as List<ProductModel>;
+        isLoadingSimilar = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading similar products: $e");
+      setState(() {
+        isLoadingSimilar = false;
+      });
+    }
   }
 
   Map<int, int> countStarRatings(List<ReviewModel> reviews) {
@@ -91,10 +122,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 );
               },
             )
-          :
-
-          /// If product is not available then show [NotifyMeCard]
-          NotifyMeCard(
+          : NotifyMeCard(
               isNotify: false,
               onChanged: (value) {},
             ),
@@ -184,26 +212,52 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: SizedBox(
-                height: 220,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5,
-                  itemBuilder: (context, index) => Padding(
-                    padding: EdgeInsets.only(
-                        left: defaultPadding, right: index == 4 ? defaultPadding : 0),
-                    child: ProductCard(
-                      image: productDemoImg2,
-                      title: "Sleeveless Tiered Dobby Swing Dress",
-                      brandName: "LIPSY LONDON",
-                      price: 24.65,
-                      priceAfterDiscount: index.isEven ? 20.99 : null,
-                      discountPercent: index.isEven ? 25 : null,
-                      press: () {},
-                    ),
-                  ),
-                ),
-              ),
+              child: isLoadingSimilar
+                  ? const SizedBox(
+                      height: 220,
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : similarProducts.isEmpty
+                      ? const SizedBox(
+                          height: 220,
+                          child: Center(
+                            child: Text("No similar products found"),
+                          ),
+                        )
+                      : SizedBox(
+                          height: 220,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: similarProducts.length,
+                            itemBuilder: (context, index) {
+                              final product = similarProducts[index];
+
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                    left: defaultPadding,
+                                    right:
+                                        index == similarProducts.length - 1 ? defaultPadding : 0),
+                                child: ProductCard(
+                                  image: product.image,
+                                  title: product.title,
+                                  brandName: product.brandName,
+                                  price: product.price,
+                                  // priceAfterDiscount: product.priceAfterDiscount,
+                                  discountPercent: product.discountPercent,
+                                  press: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/product-details',
+                                      arguments: product.id,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
             ),
             const SliverToBoxAdapter(
               child: SizedBox(height: defaultPadding),

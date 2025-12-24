@@ -145,4 +145,10 @@ class ApiEndpoints {
   static String trendingProducts({int days = 7, int limit = 10}) {
     return "/api/rating/trending-products/?days=$days&limit=$limit";
   }
+
+  /// Lấy danh sách sản phẩm Popular được đề xuất
+  static const String recommendationsPopular = '/api/recommender/popular/';
+  static String similarProducts(int productId) => '/api/recommender/$productId/similar/';
+  static String productRecommendations(int productId) => '/api/recommender/$productId/hybrid/';
+  static const String recommendationStats = '/api/recommender/stats/';
 }

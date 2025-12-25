@@ -43,7 +43,7 @@ class _OnBordingScreenState extends State<OnBordingScreen> {
       imageDarkTheme: "assets/Illustration/Illustration_darkTheme_3.png",
       title: "Package tracking",
       description:
-          "In particular, Shoplon can pack your orders, and help you seamlessly manage your shipments.",
+          "In particular, SHOPVKU can pack your orders, and help you seamlessly manage your shipments.",
     ),
     Onbord(
       image: "assets/Illustration/Illustration-4.png",

@@ -17,13 +17,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Map để lưu trữ đơn hàng theo status
   final Map<int, List<dynamic>> _ordersByStatus = {
     0: [], // Chờ xác nhận
     1: [], // Chờ lấy hàng
     2: [], // Chờ giao hàng
     3: [], // Đã giao
-    4: [], // Trả hàng
+    4: [], // Trả hàng (status=4 và is_return=2)
     5: [], // Hủy
   };
 
@@ -36,7 +35,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     5: false,
   };
 
-  // Map để lưu số lượng đơn hàng theo status
   final Map<int, int> _orderCountByStatus = {
     0: 0,
     1: 0,
@@ -53,17 +51,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
 
-    // Lắng nghe sự thay đổi tab để load data
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         _fetchOrdersByStatus(_tabController.index);
       }
     });
 
-    // Load số lượng đơn hàng cho tất cả các status
     _fetchAllOrderCounts();
-
-    // Load data tab đầu tiên
     _fetchOrdersByStatus(0);
     _fetchOrdersByStatus(1);
     _fetchOrdersByStatus(2);
@@ -80,7 +74,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     });
 
     try {
-      // Lấy user_id từ storage
       final userIdStr = await storage.read(key: 'user_id');
       if (userIdStr == null) {
         throw Exception('User chưa đăng nhập');
@@ -90,13 +83,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         throw Exception('User ID không hợp lệ');
       }
 
-      // Gọi API getOrdersByUser với userId từ storage
       final response = await OrderService.getOrdersByUser(userId);
 
       if (response['success'] == true) {
         final orders = response['data'] as List;
 
-        // Đếm số lượng đơn hàng theo từng status
         final Map<int, int> counts = {
           0: 0,
           1: 0,
@@ -108,8 +99,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
         for (var order in orders) {
           final status = order['status'] as int;
-          if (counts.containsKey(status)) {
-            counts[status] = counts[status]! + 1;
+          final isReturn = order['is_return'] as int?;
+
+          // ✅ Đếm đơn trả hàng: status = 4 VÀ is_return = 2
+          if (status == 4 && isReturn == 2) {
+            counts[4] = counts[4]! + 1;
+          } else if (counts.containsKey(status)) {
+            // ✅ Đếm các đơn khác theo status (bỏ qua status=4 với is_return != 2)
+            if (status != 4) {
+              counts[status] = counts[status]! + 1;
+            }
           }
         }
 
@@ -152,25 +151,30 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
     try {
       final response = await OrderService.getOrdersByUser(userId);
-
       if (response['success']) {
         final orders = response['data'] as List;
 
-        // Lọc đơn theo status
-        final filteredOrders = orders.where((o) => o['status'] == status).toList();
+        List<dynamic> filteredOrders;
 
-        // Chuyển đổi items API về format hiện tại
+        if (status == 4) {
+          // ✅ Tab "Trả hàng": Lấy đơn có status = 4 VÀ is_return = 2
+          filteredOrders = orders.where((o) => o['status'] == 4 && o['is_return'] == 2).toList();
+
+          print('🔍 Filtered return orders (status=4 & is_return=2): ${filteredOrders.length}');
+        } else {
+          // ✅ Các tab khác: Lọc theo status bình thường
+          filteredOrders = orders.where((o) => o['status'] == status).toList();
+        }
+
         final mappedOrders = filteredOrders.map((order) {
           final items = (order['items'] as List).map((item) {
             return {
               'product_name': item['product']['name'],
               'product_image': item['product']['main_image'],
-              // Lấy variant_name từ variant.name
               'variant_name': item['variant'] != null ? item['variant']['name'] : '',
               'quantity': item['quantity'],
               'price': item['price'],
               'original_price': item['product']['price'],
-              // Lấy brand_name từ product.brand.name
               'brand_name':
                   item['product']['brand'] != null ? item['product']['brand']['name'] : '',
             };
@@ -179,6 +183,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           return {
             'id': order['id'],
             'status': order['status'],
+            'is_return': order['is_return'],
             'total_price': order['total_price'],
             'items': items,
           };
@@ -215,11 +220,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   String formatPrice(String price) {
     if (price.isEmpty) return '';
     final number = double.tryParse(price) ?? 0;
-    final formatter = NumberFormat('#,##0', 'vi_VN'); // định dạng Việt Nam
+    final formatter = NumberFormat('#,##0', 'vi_VN');
     return '${formatter.format(number)} ₫';
   }
 
-  // Lấy tên trạng thái
   String _getStatusName(int status) {
     switch (status) {
       case 0:
@@ -239,27 +243,25 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     }
   }
 
-  // Lấy màu trạng thái
   Color _getStatusColor(int status) {
     switch (status) {
       case 0:
-        return Colors.red; // Chờ thanh toán
+        return Colors.red;
       case 1:
-        return Colors.orange; // Chờ lấy hàng
+        return Colors.orange;
       case 2:
-        return Colors.blue; // Đang giao hàng
+        return Colors.blue;
       case 3:
-        return Colors.green; // Đã giao
+        return Colors.green;
       case 4:
-        return Colors.purple; // Trả hàng
+        return Colors.purple;
       case 5:
-        return Colors.grey; // Đã hủy
+        return Colors.grey;
       default:
-        return Colors.black; // Không xác định
+        return Colors.black;
     }
   }
 
-  // Widget tạo tab với số lượng
   Widget _buildTabWithCount(String label, int status) {
     final count = _orderCountByStatus[status] ?? 0;
 
@@ -353,18 +355,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildOrderListView(0), // Chờ xác nhận
-          _buildOrderListView(1), // Chờ lấy hàng
-          _buildOrderListView(2), // Chờ giao hàng
-          _buildOrderListView(3), // Đã giao
-          _buildOrderListView(4), // Trả hàng
-          _buildOrderListView(5), // Đã hủy
+          _buildOrderListView(0),
+          _buildOrderListView(1),
+          _buildOrderListView(2),
+          _buildOrderListView(3),
+          _buildOrderListView(4),
+          _buildOrderListView(5),
         ],
       ),
     );
   }
 
-  // Widget duy nhất để hiển thị danh sách đơn hàng theo status
   Widget _buildOrderListView(int status) {
     final isLoading = _isLoadingByStatus[status] ?? false;
     final orders = _ordersByStatus[status] ?? [];
@@ -384,12 +385,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     return RefreshIndicator(
       color: const Color(0xFFE85D4D),
       onRefresh: () async {
-        // Reset và load lại data
         setState(() {
           _ordersByStatus[status] = [];
         });
         await _fetchOrdersByStatus(status);
-        await _fetchAllOrderCounts(); // Cập nhật lại số lượng
+        await _fetchAllOrderCounts();
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(0),
@@ -560,7 +560,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   Icon(Icons.store_outlined, size: 20, color: Colors.grey[700]),
                   const SizedBox(width: 8),
                   const Text(
-                    'SHOPLON',
+                    'SHOPVKU',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -716,9 +716,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Nút hành động theo status
           if (status == 0)
-            // Status 0 - Chờ xác nhận: Nút Hủy đơn
             SizedBox(
               width: 100,
               child: OutlinedButton(
@@ -726,14 +724,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text(
-                        'Xác nhận hủy đơn',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      content: Text(
-                        'Bạn có chắc chắn muốn hủy đơn hàng này?',
-                        style: GoogleFonts.roboto(),
-                      ),
+                      title: Text('Xác nhận hủy đơn',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      content: Text('Bạn có chắc chắn muốn hủy đơn hàng này?',
+                          style: GoogleFonts.roboto()),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -741,13 +735,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: Text(
-                            'Hủy đơn',
-                            style: GoogleFonts.roboto(
-                              color: const Color(0xFFE85D4D),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: Text('Hủy đơn',
+                              style: GoogleFonts.roboto(
+                                  color: const Color(0xFFE85D4D), fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ),
@@ -758,9 +748,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                     if (result['success'] == true) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Đã hủy đơn hàng', style: GoogleFonts.roboto()),
-                          ),
+                          SnackBar(content: Text('Đã hủy đơn hàng', style: GoogleFonts.roboto())),
                         );
                         setState(() {
                           _ordersByStatus[0] = [];
@@ -773,11 +761,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              result['message'] ?? 'Hủy đơn thất bại',
-                              style: GoogleFonts.roboto(),
-                            ),
-                          ),
+                              content: Text(result['message'] ?? 'Hủy đơn thất bại',
+                                  style: GoogleFonts.roboto())),
                         );
                       }
                     }
@@ -793,7 +778,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               ),
             )
           else if (status == 2)
-            // Status 2 - Chờ giao hàng: Nút Đã nhận hàng
             SizedBox(
               width: 120,
               child: ElevatedButton(
@@ -801,14 +785,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text(
-                        'Xác nhận đã nhận hàng',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      content: Text(
-                        'Bạn đã nhận được hàng và hài lòng với sản phẩm?',
-                        style: GoogleFonts.roboto(),
-                      ),
+                      title: Text('Xác nhận đã nhận hàng',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      content: Text('Bạn đã nhận được hàng và hài lòng với sản phẩm?',
+                          style: GoogleFonts.roboto()),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -816,25 +796,19 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: Text(
-                            'Đã nhận',
-                            style: GoogleFonts.roboto(
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: Text('Đã nhận',
+                              style: GoogleFonts.roboto(
+                                  color: Colors.green, fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ),
                   );
 
                   if (confirm == true) {
-                    // TODO: Call API to confirm received
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Đã xác nhận nhận hàng', style: GoogleFonts.roboto()),
-                        ),
+                            content: Text('Đã xác nhận nhận hàng', style: GoogleFonts.roboto())),
                       );
                       setState(() {
                         _ordersByStatus[2] = [];

@@ -71,6 +71,10 @@ class ApiEndpoints {
     return "$baseUrl/api/orders/cancel-return/$orderId/";
   }
 
+  static String orderProcess(int orderId) {
+    return "$baseUrl/api/orders/processed-returns/$orderId/";
+  }
+
   // ================= CART =================
   /// Thêm sản phẩm vào giỏ hàng
   static const String addToCart = "/api/cart/add/";
@@ -151,4 +155,40 @@ class ApiEndpoints {
   static String similarProducts(int productId) => '/api/recommender/$productId/similar/';
   static String productRecommendations(int productId) => '/api/recommender/$productId/hybrid/';
   static const String recommendationStats = '/api/recommender/stats/';
+
+  // ================= CHATBOT AI =================
+  /// Gửi tin nhắn tới chatbot AI
+  static const String chatWithAI = "/api/chatbot/";
+
+  /// Health check cho chatbot service
+  static const String chatHealthCheck = "/api/chatbot/health/";
+
+  /// Lấy thông tin sản phẩm cho chatbot (search, filter)
+  static String chatbotProductsInfo({String? query, int? categoryId, int limit = 20}) {
+    String url = "/api/products/chatbot-info/?limit=$limit";
+    if (query != null && query.isNotEmpty) {
+      url += "&q=$query";
+    }
+    if (categoryId != null) {
+      url += "&category=$categoryId";
+    }
+    return url;
+  }
+
+  /// Lấy chi tiết sản phẩm cho chatbot
+  static String chatbotProductDetail(int productId) {
+    return "/api/products/chatbot-info/$productId/";
+  }
+
+  /// Lấy lịch sử chat của user (nếu có implement)
+  static const String chatHistory = "/api/chat/history/";
+
+  /// Xóa lịch sử chat (nếu có implement)
+  static const String chatClearHistory = "/api/chat/clear-history/";
+
+  /// Lưu conversation (nếu có implement)
+  static const String chatSaveConversation = "/api/chat/save-conversation/";
+
+  /// Lấy danh sách conversations của user (nếu có implement)
+  static const String chatConversations = "/api/chat/conversations/";
 }

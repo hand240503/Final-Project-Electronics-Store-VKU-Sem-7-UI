@@ -22,6 +22,7 @@ import 'package:shop/screens/address/address_screen.dart';
 import 'package:shop/screens/address/add_address_screen.dart';
 import 'package:shop/screens/address/update_address_screen.dart';
 import 'package:shop/screens/order/order_screen.dart';
+import 'package:shop/screens/order/processed_return_ordersScreen.dart';
 
 // Product
 import 'package:shop/screens/product/product_details_screen.dart';
@@ -165,6 +166,12 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(
         settings: settings,
         builder: (context) => const OrderHistoryScreen(),
+      );
+
+    case processedReturnOrdersScreenRoute:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const ProcessedReturnOrdersScreen(),
       );
 
     // Entry Point

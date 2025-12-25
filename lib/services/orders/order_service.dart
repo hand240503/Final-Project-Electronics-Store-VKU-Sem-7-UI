@@ -161,4 +161,38 @@ class OrderService {
       return {'success': false, 'message': 'Lỗi: $e'};
     }
   }
+
+  static Future<Map<String, dynamic>> getProcessedReturnOrders(int userId) async {
+    try {
+      String? token = await storage.read(key: 'access');
+      if (token == null) {
+        return {'success': false, 'message': 'User not logged in'};
+      }
+
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.orderProcess(userId)),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else if (response.statusCode == 403) {
+        return {'success': false, 'message': 'Permission denied'};
+      } else if (response.statusCode == 404) {
+        return {'success': false, 'message': 'User not found'};
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['error'] ?? 'Failed to fetch processed return orders'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi: $e'};
+    }
+  }
 }

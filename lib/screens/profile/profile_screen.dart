@@ -168,6 +168,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           ProfileMenuListTile(
+            text: "Returned Orders",
+            svgSrc: "assets/icons/Order.svg",
+            press: () {
+              Navigator.pushNamed(context, processedReturnOrdersScreenRoute);
+            },
+          ),
+          ProfileMenuListTile(
             text: "Addresses",
             svgSrc: "assets/icons/Address.svg",
             press: () {

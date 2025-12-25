@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/models/notification_model.dart';
 import 'package:shop/constants.dart';
 import 'package:intl/intl.dart';
+import 'package:shop/screens/order/order_detail_screen.dart';
 import 'package:shop/services/notifications/notification_service.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -58,8 +59,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
       // TODO: Navigate đến màn hình tương ứng dựa vào redirectUrl
       if (redirectUrl != null) {
-        print('Navigate to: $redirectUrl');
-        // Navigator.pushNamed(context, redirectUrl);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailScreen(orderId: int.parse(redirectUrl)),
+          ),
+        );
       }
     } catch (e) {
       print('Error handling notification tap: $e');

@@ -237,7 +237,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     final result = await OrderService.createOrder(orderPayload);
 
     if (result['success']) {
-      // ✅ THÊM TRACKING Ở ĐÂY - Track hành động "buy" cho từng sản phẩm
       await _trackPurchase(items, oderCode);
 
       Navigator.pushReplacement(
@@ -274,7 +273,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       debugPrint('✅ Tracked purchase for ${items.length} products');
     } catch (e) {
       debugPrint('❌ Error tracking purchase: $e');
-      // Không throw error để không ảnh hưởng đến flow đặt hàng
     }
   }
 
@@ -394,7 +392,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               const Icon(Icons.inbox_outlined, size: 22),
               const SizedBox(width: 8),
               Text(
-                'SHOPLON',
+                'SHOPVKU',
                 style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black),
               ),

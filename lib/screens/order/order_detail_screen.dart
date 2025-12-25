@@ -226,7 +226,7 @@ class OrderDetailScreen extends StatelessWidget {
                           const Icon(Icons.store_outlined, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            "SHOPLON",
+                            "SHOPVKU",
                             style: GoogleFonts.roboto(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,

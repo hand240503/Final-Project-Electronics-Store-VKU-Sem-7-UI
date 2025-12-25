@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/routes/route_constants.dart';
-import 'package:shop/screens/notification/notification_screen.dart';
+import 'package:shop/screens/chat/chat_bot_screen.dart';
 import 'package:shop/screens/cart/cart_screen.dart';
 import 'package:shop/screens/discover/discover_screen.dart';
 import 'package:shop/screens/home/home_screen.dart';
@@ -22,7 +22,7 @@ class _EntryPointState extends State<EntryPoint> {
   final List _pages = const [
     HomeScreen(),
     DiscoverScreen(),
-    NotificationScreen(),
+    ChatbotScreen(),
     CartScreen(),
     ProfileScreen(),
   ];
@@ -114,7 +114,7 @@ class _EntryPointState extends State<EntryPoint> {
         leadingWidth: 0,
         centerTitle: false,
         title: Text(
-          'Shoplon',
+          'SHOPVKU',
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -230,9 +230,9 @@ class _EntryPointState extends State<EntryPoint> {
                         ),
                       ),
                       backgroundColor: Colors.red,
-                      child: svgIcon("assets/icons/Bookmark.svg"),
+                      child: svgIcon("assets/icons/Message.svg"),
                     )
-                  : svgIcon("assets/icons/Bookmark.svg"),
+                  : svgIcon("assets/icons/Message.svg"),
               activeIcon: _unreadCount > 0
                   ? Badge(
                       label: Text(
@@ -243,10 +243,10 @@ class _EntryPointState extends State<EntryPoint> {
                         ),
                       ),
                       backgroundColor: Colors.red,
-                      child: svgIcon("assets/icons/Bookmark.svg", color: primaryColor),
+                      child: svgIcon("assets/icons/Message.svg", color: primaryColor),
                     )
-                  : svgIcon("assets/icons/Bookmark.svg", color: primaryColor),
-              label: "Bookmark",
+                  : svgIcon("assets/icons/Message.svg", color: primaryColor),
+              label: "Message",
             ),
             BottomNavigationBarItem(
               icon: svgIcon("assets/icons/Bag.svg"),

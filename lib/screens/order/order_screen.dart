@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop/routes/route_constants.dart';
 import 'package:shop/screens/order/order_detail_screen.dart';
+import 'package:shop/screens/product/product_review_screen.dart';
 import 'package:shop/services/orders/order_service.dart';
 import 'package:intl/intl.dart';
 
@@ -935,7 +936,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               width: 100,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to review screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductReviewScreen(orderId: orderId),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE85D4D),

@@ -21,7 +21,15 @@ class OrderDetailScreen extends StatelessWidget {
       case 3:
         return 'Đơn hàng đã hoàn thành';
       case 4:
-        return 'Đơn hàng đang được kiểm tra';
+        final isReturn = order['is_return'] ?? 0;
+        if (isReturn == 1) {
+          return 'Đơn hàng đã được trả lại thành công';
+        } else if (isReturn == 2) {
+          return 'Yêu cầu trả hàng đang được xử lý';
+        } else if (isReturn == 0) {
+          return 'Yêu cầu trả hàng đã bị từ chối';
+        }
+        return 'Trả hàng';
       case 5:
         return 'Đã hủy đơn hàng';
       default:
@@ -29,17 +37,327 @@ class OrderDetailScreen extends StatelessWidget {
     }
   }
 
-  Color _getPaymentStatusColor(int status) {
+  Color _getPaymentStatusColor(int status, Map order) {
     switch (status) {
       case 3:
         return Colors.green;
       case 4:
-        return Colors.orange;
+        final isReturn = order['is_return'] ?? 0;
+        if (isReturn == 1) {
+          return Colors.green;
+        } else if (isReturn == 2) {
+          return Colors.amber;
+        } else {
+          return Colors.red;
+        }
       case 5:
         return Colors.red;
       default:
         return Colors.black87;
     }
+  }
+
+  String _getStatusText(int status, int isReturn) {
+    switch (status) {
+      case 0:
+        return 'Chờ xác nhận';
+      case 1:
+        return 'Chờ lấy hàng';
+      case 2:
+        return 'Đang giao hàng';
+      case 3:
+        return 'Đã giao';
+      case 4:
+        if (isReturn == 1) {
+          return 'Trả hàng thành công';
+        } else if (isReturn == 2) {
+          return 'Đang xử lý trả hàng';
+        } else {
+          return 'Yêu cầu trả hàng bị từ chối';
+        }
+      case 5:
+        return 'Đã hủy';
+      default:
+        return 'Chờ Người bán gửi hàng';
+    }
+  }
+
+  Color _getStatusColor(int status, int isReturn) {
+    switch (status) {
+      case 0:
+      case 1:
+        return const Color(0xFF26A69A);
+      case 2:
+        return Colors.blue;
+      case 3:
+        return Colors.green;
+      case 4:
+        if (isReturn == 1) {
+          return Colors.green;
+        } else if (isReturn == 2) {
+          return Colors.amber;
+        } else {
+          return Colors.red;
+        }
+      case 5:
+        return Colors.red;
+      default:
+        return const Color(0xFF26A69A);
+    }
+  }
+
+  IconData _getStatusIcon(int status, int isReturn) {
+    switch (status) {
+      case 0:
+        return Icons.schedule;
+      case 1:
+        return Icons.inventory;
+      case 2:
+        return Icons.local_shipping;
+      case 3:
+        return Icons.check_circle;
+      case 4:
+        if (isReturn == 1) {
+          return Icons.check_circle;
+        } else if (isReturn == 2) {
+          return Icons.sync;
+        } else {
+          return Icons.cancel;
+        }
+      case 5:
+        return Icons.cancel;
+      default:
+        return Icons.info;
+    }
+  }
+
+  Widget _buildReturnInfoCard(int status, int isReturn, BuildContext context) {
+    if (status != 4) return const SizedBox.shrink();
+
+    String title;
+    String message;
+    IconData icon;
+
+    if (isReturn == 1) {
+      title = 'Trả hàng thành công';
+      message = 'Sản phẩm đã được trả lại và hoàn tiền đã được xử lý thành công.';
+      icon = Icons.check_circle;
+    } else if (isReturn == 2) {
+      title = 'Đang xử lý trả hàng';
+      message = 'Yêu cầu trả hàng của bạn đang được xem xét. Vui lòng chờ xác nhận từ người bán.';
+      icon = Icons.sync;
+    } else {
+      title = 'Yêu cầu bị từ chối';
+      message =
+          'Yêu cầu trả hàng của bạn đã bị từ chối. Vui lòng liên hệ với người bán để biết thêm chi tiết.';
+      icon = Icons.cancel;
+    }
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: _getStatusColor(status, isReturn),
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Thông tin trả hàng',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _getStatusColor(status, isReturn).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _getStatusColor(status, isReturn).withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      color: _getStatusColor(status, isReturn),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.roboto(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _getStatusColor(status, isReturn),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: GoogleFonts.roboto(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(int status, int isReturn, BuildContext context, int orderId) {
+    if (status != 4) return const SizedBox.shrink();
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          if (isReturn == 2) ...[
+            // Nút Hủy yêu cầu trả hàng (khi đang xử lý)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Hủy yêu cầu trả hàng'),
+                      content: const Text('Bạn có chắc chắn muốn hủy yêu cầu trả hàng này không?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Không'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text(
+                            'Hủy yêu cầu',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    // TODO: Gọi API hủy yêu cầu trả hàng
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Đã hủy yêu cầu trả hàng'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Hủy yêu cầu trả hàng',
+                  style: GoogleFonts.roboto(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ] else if (isReturn == 1) ...[
+            // Nút Xem chi tiết hoàn tiền (khi đã trả thành công)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Mở màn hình chi tiết hoàn tiền
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Xem chi tiết hoàn tiền'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.receipt_long),
+                label: Text(
+                  'Xem chi tiết hoàn tiền',
+                  style: GoogleFonts.roboto(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ] else if (isReturn == 0) ...[
+            // Nút Liên hệ hỗ trợ (khi bị từ chối)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Mở màn hình liên hệ hỗ trợ
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Liên hệ bộ phận hỗ trợ'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.support_agent),
+                label: Text(
+                  'Liên hệ hỗ trợ',
+                  style: GoogleFonts.roboto(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -82,6 +400,9 @@ class OrderDetailScreen extends StatelessWidget {
           final status = order['status'] is int
               ? order['status']
               : int.tryParse(order['status'].toString()) ?? 0;
+          final isReturn = order['is_return'] is int
+              ? order['is_return']
+              : int.tryParse(order['is_return']?.toString() ?? '0') ?? 0;
           final orderCode = order['id']?.toString() ?? "N/A";
 
           return SingleChildScrollView(
@@ -94,22 +415,43 @@ class OrderDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF26A69A), Color(0xFF4DB6AC)],
+                    gradient: LinearGradient(
+                      colors: [
+                        _getStatusColor(status, isReturn),
+                        _getStatusColor(status, isReturn).withOpacity(0.7),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    _getStatusText(status),
-                    style: GoogleFonts.roboto(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getStatusIcon(status, isReturn),
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _getStatusText(status, isReturn),
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+                // Thông tin trả hàng (chỉ hiện khi status = 4)
+                _buildReturnInfoCard(status, isReturn, context),
+
+                // Action buttons (chỉ hiện khi status = 4)
+                _buildActionButtons(status, isReturn, context, orderId),
 
                 // Phương thức thanh toán
                 Container(
@@ -126,7 +468,7 @@ class OrderDetailScreen extends StatelessWidget {
                           style: GoogleFonts.roboto(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: _getPaymentStatusColor(status),
+                            color: _getPaymentStatusColor(status, order),
                           ),
                         ),
                       ),
@@ -421,7 +763,7 @@ class OrderDetailScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
-                          height: 68,
+                          height: 48,
                           child: OutlinedButton(
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
@@ -493,24 +835,5 @@ class OrderDetailScreen extends StatelessWidget {
         },
       ),
     );
-  }
-
-  String _getStatusText(int status) {
-    switch (status) {
-      case 0:
-        return 'Chờ xác nhận';
-      case 1:
-        return 'Chờ lấy hàng';
-      case 2:
-        return 'Đang giao hàng';
-      case 3:
-        return 'Đã giao';
-      case 4:
-        return 'Trả hàng';
-      case 5:
-        return 'Đã hủy';
-      default:
-        return 'Chờ Người bán gửi hàng';
-    }
   }
 }

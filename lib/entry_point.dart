@@ -219,33 +219,10 @@ class _EntryPointState extends State<EntryPoint> {
               activeIcon: svgIcon("assets/icons/Search.svg", color: primaryColor),
               label: "Search",
             ),
+            // ĐÃ XÓA BADGE Ở TAB MESSAGE
             BottomNavigationBarItem(
-              icon: _unreadCount > 0
-                  ? Badge(
-                      label: Text(
-                        _unreadCount > 99 ? '99+' : _unreadCount.toString(),
-                        style: GoogleFonts.roboto(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      backgroundColor: Colors.red,
-                      child: svgIcon("assets/icons/Message.svg"),
-                    )
-                  : svgIcon("assets/icons/Message.svg"),
-              activeIcon: _unreadCount > 0
-                  ? Badge(
-                      label: Text(
-                        _unreadCount > 99 ? '99+' : _unreadCount.toString(),
-                        style: GoogleFonts.roboto(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      backgroundColor: Colors.red,
-                      child: svgIcon("assets/icons/Message.svg", color: primaryColor),
-                    )
-                  : svgIcon("assets/icons/Message.svg", color: primaryColor),
+              icon: svgIcon("assets/icons/Message.svg"),
+              activeIcon: svgIcon("assets/icons/Message.svg", color: primaryColor),
               label: "Message",
             ),
             BottomNavigationBarItem(

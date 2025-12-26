@@ -191,4 +191,16 @@ class ApiEndpoints {
 
   /// Lấy danh sách conversations của user (nếu có implement)
   static const String chatConversations = "/api/chat/conversations/";
+
+  static String createRating(int productId) {
+    return "/api/products/$productId/rating/";
+  }
+
+  static String getReviews(int productId) {
+    return "/api/products/$productId/reviews/";
+  }
+
+  static String deleteRating(int productId) {
+    return "/api/products/reviews/$productId/";
+  }
 }

@@ -33,6 +33,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   List<ProductModel> similarProducts = [];
   bool isLoadingSimilar = false;
 
+  // Reviews data
+  List<ReviewModel> reviews = [];
+  double averageRating = 0.0;
+  int totalReviews = 0;
+  bool isLoadingReviews = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -43,6 +49,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       productId = args;
       _loadProductDetail(productId);
       _loadSimilarProducts(productId);
+      _loadProductReviews(productId);
     } else {
       debugPrint("Không nhận được productId hợp lệ từ arguments: $args");
     }
@@ -71,7 +78,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         limit: 10,
       );
 
-      // response['results'] đã là List<ProductModel> từ service
       setState(() {
         similarProducts = response['results'] as List<ProductModel>;
         isLoadingSimilar = false;
@@ -82,6 +88,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         isLoadingSimilar = false;
       });
     }
+  }
+
+  /// Load reviews từ API
+  Future<void> _loadProductReviews(int id) async {
+    setState(() {
+      isLoadingReviews = true;
+    });
+
+    try {
+      final reviewData = await ProductService.getProductReviews(id);
+
+      setState(() {
+        reviews = reviewData['reviews'] as List<ReviewModel>;
+        averageRating = reviewData['average_rating'] ?? 0.0;
+        totalReviews = reviewData['total_reviews'] ?? 0;
+        isLoadingReviews = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading reviews: $e");
+      setState(() {
+        isLoadingReviews = false;
+      });
+    }
+  }
+
+  /// Callback khi user tạo review mới
+  void _onReviewCreated() {
+    // Reload lại reviews sau khi tạo mới
+    _loadProductReviews(productId);
   }
 
   Map<int, int> countStarRatings(List<ReviewModel> reviews) {
@@ -108,7 +143,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final starStats = countStarRatings(productDetail?.reviews ?? []);
+    final starStats = countStarRatings(reviews);
 
     return Scaffold(
       bottomNavigationBar: productDetail?.isAvailable == true
@@ -153,8 +188,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               isAvailable: productDetail?.isAvailable ?? false,
               description:
                   productDetail?.description ?? 'No description available for this product.',
-              rating: productDetail?.rating ?? 0.0,
-              numOfReviews: productDetail?.reviews.length ?? 0,
+              rating: averageRating,
+              numOfReviews: totalReviews,
               price: productDetail?.price ?? 0.0,
               discountPrice: productDetail?.discountPrice ?? 0.0,
             ),
@@ -187,21 +222,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 );
               },
             ),
+            // Review Card
             SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(defaultPadding),
-                child: ReviewCard(
-                  rating: safeRating(productDetail?.rating),
-                  numOfReviews: productDetail?.reviews.length ?? 0,
-                  numOfFiveStar: starStats[5] ?? 0,
-                  numOfFourStar: starStats[4] ?? 0,
-                  numOfThreeStar: starStats[3] ?? 0,
-                  numOfTwoStar: starStats[2] ?? 0,
-                  numOfOneStar: starStats[1] ?? 0,
-                ),
-              ),
+              child: isLoadingReviews
+                  ? Padding(
+                      padding: EdgeInsets.all(defaultPadding),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : Padding(
+                      padding: EdgeInsets.all(defaultPadding),
+                      child: ReviewCard(
+                        rating: safeRating(averageRating),
+                        numOfReviews: totalReviews,
+                        numOfFiveStar: starStats[5] ?? 0,
+                        numOfFourStar: starStats[4] ?? 0,
+                        numOfThreeStar: starStats[3] ?? 0,
+                        numOfTwoStar: starStats[2] ?? 0,
+                        numOfOneStar: starStats[1] ?? 0,
+                      ),
+                    ),
             ),
-            ProductReviews(reviews: productDetail?.reviews ?? []),
+            // Product Reviews với callback
+            ProductReviews(reviews: reviews),
             SliverPadding(
               padding: const EdgeInsets.all(defaultPadding),
               sliver: SliverToBoxAdapter(
@@ -244,7 +288,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   title: product.title,
                                   brandName: product.brandName,
                                   price: product.price,
-                                  // priceAfterDiscount: product.priceAfterDiscount,
                                   discountPercent: product.discountPercent,
                                   press: () {
                                     Navigator.pushNamed(

@@ -340,25 +340,60 @@ class ReviewModel {
   final int id;
   final String user;
   final int rating;
-  final String comment;
+  final String? comment;
   final String createdAt;
 
   ReviewModel({
     required this.id,
     required this.user,
     required this.rating,
-    required this.comment,
+    this.comment,
     required this.createdAt,
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
       id: json['id'],
-      user: json['user'],
+      user: json['user'] ?? 'Anonymous',
       rating: json['rating'],
       comment: json['comment'],
       createdAt: json['created_at'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user': user,
+      'rating': rating,
+      'comment': comment,
+      'created_at': createdAt,
+    };
+  }
+
+  // Format thời gian hiển thị
+  String getFormattedDate() {
+    try {
+      final date = DateTime.parse(createdAt);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 365) {
+        return '${(difference.inDays / 365).floor()} năm trước';
+      } else if (difference.inDays > 30) {
+        return '${(difference.inDays / 30).floor()} tháng trước';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays} ngày trước';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} giờ trước';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} phút trước';
+      } else {
+        return 'Vừa xong';
+      }
+    } catch (e) {
+      return createdAt;
+    }
   }
 }
 
